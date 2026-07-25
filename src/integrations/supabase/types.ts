@@ -19,12 +19,15 @@ export type Database = {
           answer_key: string
           created_at: string
           end_at: string | null
+          force_live: boolean
           id: string
           leaderboard_visible: boolean
+          live_at: string | null
           manual_lock: boolean
           question: string
           slot: number
           start_at: string
+          test_emails: string[]
           title: string
           track: Database["public"]["Enums"]["event_track"]
         }
@@ -32,12 +35,15 @@ export type Database = {
           answer_key?: string
           created_at?: string
           end_at?: string | null
+          force_live?: boolean
           id?: string
           leaderboard_visible?: boolean
+          live_at?: string | null
           manual_lock?: boolean
           question?: string
           slot: number
           start_at: string
+          test_emails?: string[]
           title: string
           track: Database["public"]["Enums"]["event_track"]
         }
@@ -45,12 +51,15 @@ export type Database = {
           answer_key?: string
           created_at?: string
           end_at?: string | null
+          force_live?: boolean
           id?: string
           leaderboard_visible?: boolean
+          live_at?: string | null
           manual_lock?: boolean
           question?: string
           slot?: number
           start_at?: string
+          test_emails?: string[]
           title?: string
           track?: Database["public"]["Enums"]["event_track"]
         }

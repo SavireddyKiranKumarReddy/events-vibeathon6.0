@@ -51,12 +51,19 @@ function EventsPage() {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {events.map((e: any) => {
-          const start = new Date(e.start_at).getTime();
+          const effectiveStart = e.live_at ? new Date(e.live_at).getTime() : new Date(e.start_at).getTime();
           const next = (data?.events ?? [])
-            .filter((x: any) => x.track === track && new Date(x.start_at).getTime() > start)
+            .filter((x: any) => x.track === track && new Date(x.start_at).getTime() > new Date(e.start_at).getTime())
             .sort((a: any, b: any) => +new Date(a.start_at) - +new Date(b.start_at))[0];
-          const locksAt = next ? new Date(next.start_at).getTime() : e.end_at ? new Date(e.end_at).getTime() : null;
-          const upcoming = now < start;
+
+          let locksAt: number | null;
+          if (e.force_live) {
+            locksAt = e.end_at ? new Date(e.end_at).getTime() : null;
+          } else {
+            locksAt = next ? new Date(next.start_at).getTime() : e.end_at ? new Date(e.end_at).getTime() : null;
+          }
+
+          const upcoming = now < effectiveStart;
           const isOpen = !upcoming && !e.manual_lock && (!locksAt || now < locksAt);
           const closed = !upcoming && !isOpen;
           return (
@@ -79,7 +86,17 @@ function EventsPage() {
               </div>
               <div className="mt-2 text-lg font-semibold text-white">{e.title}</div>
               <div className="mt-1 text-xs text-white/50">Starts {formatIST(e.start_at)}</div>
-              {upcoming && <div className="mt-3 font-mono text-xl text-primary">{countdown(e.start_at)}</div>}
+              {e.force_live && (
+                <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-500/20 px-2 py-0.5 text-[10px] font-medium text-green-400">
+                  Force Live
+                </div>
+              )}
+              {e.test_emails?.length > 0 && !e.force_live && (
+                <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-yellow-500/20 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
+                  Test mode ({e.test_emails.length} emails)
+                </div>
+              )}
+              {upcoming && <div className="mt-3 font-mono text-xl text-primary">{countdown(e.live_at ?? e.start_at)}</div>}
               {isOpen && (
                 <Link
                   to={e.slot === 1 && track === "tech" ? "/tech1" : e.slot === 1 && track === "nontech" ? "/nontech1" : "/events/$track/$slot"}

@@ -224,6 +224,7 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
   const [title, setTitle] = useState(event.title ?? "");
   const [question, setQuestion] = useState(event.question ?? "");
   const [answerKey, setAnswerKey] = useState(event.answer_key ?? "");
+  const [testEmailsText, setTestEmailsText] = useState((event.test_emails ?? []).join("\n"));
   const toLocal = (iso: string | null | undefined) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -232,6 +233,7 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
   };
   const [startAt, setStartAt] = useState(toLocal(event.start_at));
   const [endAt, setEndAt] = useState(toLocal(event.end_at));
+  const [liveAt, setLiveAt] = useState(toLocal(event.live_at));
   return (
     <GlassCard>
       <div className="flex items-center justify-between">
@@ -251,6 +253,11 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
             label="Manual lock"
             value={!!event.manual_lock}
             onChange={(v) => onSave({ manual_lock: v })}
+          />
+          <Toggle
+            label="Force live"
+            value={!!event.force_live}
+            onChange={(v) => onSave({ force_live: v })}
           />
         </div>
       </div>
@@ -278,6 +285,27 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
           />
         </label>
       </div>
+      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <label className="block">
+          <div className="text-xs text-white/60">Live at (overrides start_at for open check, optional)</div>
+          <input
+            type="datetime-local"
+            value={liveAt}
+            onChange={(e) => setLiveAt(e.target.value)}
+            className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-primary"
+          />
+        </label>
+        <label className="block">
+          <div className="text-xs text-white/60">Test emails (one per line — these users can access before live)</div>
+          <textarea
+            value={testEmailsText}
+            onChange={(e) => setTestEmailsText(e.target.value)}
+            rows={3}
+            placeholder="user1@example.com&#10;user2@example.com"
+            className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm font-mono text-white outline-none focus:border-primary"
+          />
+        </label>
+      </div>
       <label className="mt-3 block">
         <div className="text-xs text-white/60">Question</div>
         <textarea
@@ -296,6 +324,8 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
               answer_key: answerKey,
               start_at: startAt ? new Date(startAt).toISOString() : undefined,
               end_at: endAt ? new Date(endAt).toISOString() : null,
+              test_emails: testEmailsText.split("\n").map((e: string) => e.trim()).filter(Boolean),
+              live_at: liveAt ? new Date(liveAt).toISOString() : null,
             })
           }
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"

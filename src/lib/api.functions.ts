@@ -36,7 +36,7 @@ export const listEvents = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("events")
       .select(
-        "id, track, slot, title, question, start_at, end_at, leaderboard_visible, manual_lock, created_at",
+        "id, track, slot, title, question, start_at, end_at, leaderboard_visible, manual_lock, created_at, test_emails, force_live, live_at",
       )
       .order("track", { ascending: true })
       .order("slot", { ascending: true });
@@ -48,18 +48,19 @@ export const getEvent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { track: "tech" | "nontech"; slot: number }) => d)
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { supabase, userId, claims } = context;
+    const authEmail = (claims.email as string | undefined)?.toLowerCase() ?? null;
     const { data: ev, error } = await supabase
       .from("events")
       .select(
-        "id, track, slot, title, question, start_at, end_at, leaderboard_visible, manual_lock, created_at",
+        "id, track, slot, title, question, start_at, end_at, leaderboard_visible, manual_lock, created_at, test_emails, force_live, live_at",
       )
       .eq("track", data.track)
       .eq("slot", data.slot)
       .maybeSingle();
     if (error) throw error;
     if (!ev) throw new Error("Event not found");
-    // Locks-at = min(next start_at in same track, ev.end_at)
+
     const { data: next } = await supabase
       .from("events")
       .select("start_at")
@@ -69,16 +70,25 @@ export const getEvent = createServerFn({ method: "GET" })
       .limit(1)
       .maybeSingle();
     const locksAt = next?.start_at ?? ev.end_at ?? null;
-    const now = Date.now();
-    const started = now >= new Date(ev.start_at).getTime();
-    const notLocked = !locksAt || now < new Date(locksAt).getTime();
-    const open = started && notLocked && !ev.manual_lock;
 
     const { data: team } = await supabase
       .from("teams")
-      .select("id")
+      .select("id, lead_email")
       .eq("user_id", userId)
       .maybeSingle();
+
+    const now = Date.now();
+    const effectiveStart = ev.live_at ? new Date(ev.live_at).getTime() : new Date(ev.start_at).getTime();
+    const isTestEmail = authEmail && ev.test_emails?.length
+      ? ev.test_emails.map((e: string) => e.toLowerCase()).includes(authEmail)
+      : false;
+
+    const started = ev.force_live || isTestEmail || now >= effectiveStart;
+    const notLocked = ev.force_live || isTestEmail
+      ? !ev.end_at || now < new Date(ev.end_at).getTime()
+      : !locksAt || now < new Date(locksAt).getTime();
+    const open = started && notLocked && !ev.manual_lock;
+
     let submission = null as null | {
       id: string;
       answer: string;
@@ -277,6 +287,9 @@ export const adminUpdateEvent = createServerFn({ method: "POST" })
       end_at?: string | null;
       leaderboard_visible?: boolean;
       manual_lock?: boolean;
+      test_emails?: string[];
+      force_live?: boolean;
+      live_at?: string | null;
     }) =>
       z
         .object({
@@ -288,6 +301,9 @@ export const adminUpdateEvent = createServerFn({ method: "POST" })
           end_at: z.string().nullable().optional(),
           leaderboard_visible: z.boolean().optional(),
           manual_lock: z.boolean().optional(),
+          test_emails: z.array(z.string()).optional(),
+          force_live: z.boolean().optional(),
+          live_at: z.string().nullable().optional(),
         })
         .parse(d),
   )

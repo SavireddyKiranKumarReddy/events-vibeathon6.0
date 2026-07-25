@@ -32,18 +32,32 @@ function Dashboard() {
 
   const nextByTrack = (track: "tech" | "nontech") =>
     events
-      .filter((e: any) => e.track === track && new Date(e.start_at).getTime() > now)
-      .sort((a: any, b: any) => +new Date(a.start_at) - +new Date(b.start_at))[0] ?? null;
+      .filter((e: any) => {
+        if (e.track !== track) return false;
+        const effectiveStart = e.live_at ? new Date(e.live_at).getTime() : new Date(e.start_at).getTime();
+        return effectiveStart > now;
+      })
+      .sort((a: any, b: any) => {
+        const aStart = a.live_at ? new Date(a.live_at).getTime() : new Date(a.start_at).getTime();
+        const bStart = b.live_at ? new Date(b.live_at).getTime() : new Date(b.start_at).getTime();
+        return aStart - bStart;
+      })[0] ?? null;
 
   const openByTrack = (track: "tech" | "nontech") =>
     events
       .filter((e: any) => e.track === track)
       .find((e: any) => {
         if (e.manual_lock) return false;
-        const start = new Date(e.start_at).getTime();
-        if (now < start) return false;
+        const effectiveStart = e.live_at ? new Date(e.live_at).getTime() : new Date(e.start_at).getTime();
+
+        if (e.force_live) {
+          if (e.end_at && now >= new Date(e.end_at).getTime()) return false;
+          return true;
+        }
+
+        if (now < effectiveStart) return false;
         const next = events
-          .filter((x: any) => x.track === track && new Date(x.start_at).getTime() > start)
+          .filter((x: any) => x.track === track && new Date(x.start_at).getTime() > new Date(e.start_at).getTime())
           .sort((a: any, b: any) => +new Date(a.start_at) - +new Date(b.start_at))[0];
         const locksAt = next ? new Date(next.start_at).getTime() : e.end_at ? new Date(e.end_at).getTime() : null;
         return !locksAt || now < locksAt;
