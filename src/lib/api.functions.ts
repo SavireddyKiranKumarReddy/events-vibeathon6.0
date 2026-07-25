@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ---- Session/me ----
 export const getMe = createServerFn({ method: "GET" })
@@ -147,20 +148,20 @@ export const submitAnswer = createServerFn({ method: "POST" })
 export const getLeaderboards = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data: roleRows } = await supabase
+    const { userId } = context;
+    const { data: roleRows } = await context.supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
     const isAdmin = !!roleRows?.some((r) => r.role === "admin");
 
-    const { data: events } = await supabase
+    const { data: events } = await supabaseAdmin
       .from("events")
       .select("id, track, slot, title, start_at, end_at, leaderboard_visible, manual_lock");
-    const { data: subs } = await supabase
+    const { data: subs } = await supabaseAdmin
       .from("submissions")
       .select("event_id, team_id, submitted_at, auto_correct, admin_override, score");
-    const { data: teams } = await supabase.from("teams").select("id, name, lead_name");
+    const { data: teams } = await supabaseAdmin.from("teams").select("id, name, lead_name");
 
     return { events: events ?? [], submissions: subs ?? [], teams: teams ?? [], isAdmin };
   });
