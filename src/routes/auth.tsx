@@ -35,6 +35,7 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -91,7 +92,7 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password: DEFAULT_PASSWORD,
+        password,
       });
       if (error) {
         if (error.message.includes("Invalid login")) {
@@ -154,14 +155,16 @@ function AuthPage() {
               <div className="text-xs text-white/60">Password</div>
               <input
                 type="password"
-                value={DEFAULT_PASSWORD}
-                readOnly
-                className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/40 outline-none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-primary"
+                placeholder="Enter your password"
               />
             </label>
             <button
               type="submit"
-              disabled={loading || !email}
+              disabled={loading || !email || !password}
               className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
             >
               {loading ? "Signing in…" : "Sign In with Email"}
