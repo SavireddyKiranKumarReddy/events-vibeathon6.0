@@ -1620,23 +1620,29 @@ function TechEvent2() {
   }
 
   if (submission) {
+    const isCorrect = submission.auto_correct || submission.admin_override;
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <GlassCard>
-          <div className="flex items-center gap-2 text-[#22c55e]">
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="font-semibold">Flag Submitted Successfully!</span>
+          <div className={`flex items-center gap-2 ${isCorrect ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+            {isCorrect ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+            <span className="font-semibold">{isCorrect ? "Correct!" : "Incorrect"}</span>
           </div>
           <div className="mt-3 text-sm text-white/70">
-            Your answer has been recorded at <span className="font-mono text-white/90">{formatIST(submission.submitted_at)}</span>.
+            Submitted at <span className="font-mono text-white/90">{formatIST(submission.submitted_at)}</span>
           </div>
-          <div className="mt-4 rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 p-4">
-            <p className="text-sm text-white/80">
-              Our team will validate your submission and update the leaderboard soon.
-            </p>
-            <p className="mt-1 text-xs text-white/50">
-              This challenge is now locked for your team. You cannot submit again.
-            </p>
+          <div className={`mt-4 rounded-lg border p-4 ${isCorrect ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}>
+            {isCorrect ? (
+              <>
+                <p className="text-sm font-semibold text-[#22c55e]">Auto-graded: Correct — Score: {submission.score ?? 1}</p>
+                <p className="mt-1 text-xs text-white/50">Your answer was automatically evaluated. This challenge is now locked.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-[#ef4444]">Auto-graded: Incorrect — Score: {submission.score ?? 0}</p>
+                <p className="mt-1 text-xs text-white/50">Your answer did not match. This challenge is locked — you cannot submit again.</p>
+              </>
+            )}
           </div>
         </GlassCard>
       </div>
