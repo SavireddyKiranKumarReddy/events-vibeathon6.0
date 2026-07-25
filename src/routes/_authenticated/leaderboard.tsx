@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getLeaderboards } from "@/lib/api.functions";
 import { GlassCard } from "@/components/AppShell";
+import { formatIST } from "@/lib/format";
 import { Trophy, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
@@ -142,6 +143,7 @@ function LB() {
                           </span>
                           <span className="text-white font-semibold">{team.name}</span>
                           {team.lead_name && <span className="text-sm text-white/40">— {team.lead_name}</span>}
+                          {!isNonTech && s.submitted_at && <span className="text-xs text-white/30 ml-1">{formatIST(s.submitted_at)}</span>}
                         </div>
                         {isNonTech && s.score != null && (
                           <span className="text-xs font-bold text-primary">{s.score} pts</span>
