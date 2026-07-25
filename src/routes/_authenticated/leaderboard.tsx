@@ -67,7 +67,7 @@ function LB() {
         <p className="mt-1 text-sm text-white/60">
           {d.isAdmin
             ? "Admin view — you see all leaderboards regardless of visibility toggles."
-            : "Only leaderboards the admin has made visible are shown."}
+            : "Live leaderboard for all participants."}
         </p>
       </div>
       <div className="glass inline-flex p-1">
@@ -123,7 +123,7 @@ function LB() {
       {/* Per-Event Rankings */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {events.map((e: any) => {
-          const visible = d.isAdmin || e.leaderboard_visible;
+          const visible = true;
           const subs = d.submissions
             .filter((s: any) => s.event_id === e.id)
             .filter((s: any) => {
