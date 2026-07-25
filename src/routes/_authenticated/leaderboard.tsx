@@ -28,16 +28,17 @@ function LB() {
 
   const isNonTech = track === "nontech";
 
-  const overall = new Map<string, { correct: number; totalScore: number }>();
+  const overall = new Map<string, { correct: number; totalScore: number; firstSub: string }>();
   const trackEventIds = new Set(events.map((e: any) => e.id));
   for (const s of d.submissions) {
     if (!trackEventIds.has(s.event_id)) continue;
     const correct = s.admin_override !== null && s.admin_override !== undefined ? s.admin_override : s.auto_correct;
-    const entry = overall.get(s.team_id) ?? { correct: 0, totalScore: 0 };
+    const entry = overall.get(s.team_id) ?? { correct: 0, totalScore: 0, firstSub: s.submitted_at };
     if (correct) {
       entry.correct += 1;
       entry.totalScore += s.score ?? 0;
     }
+    if (s.submitted_at < entry.firstSub) entry.firstSub = s.submitted_at;
     overall.set(s.team_id, entry);
   }
 
@@ -46,9 +47,10 @@ function LB() {
     .sort((a, b) => {
       if (isNonTech) {
         if (a[1].totalScore !== b[1].totalScore) return b[1].totalScore - a[1].totalScore;
-        return b[1].correct - a[1].correct;
+        return a[1].firstSub.localeCompare(b[1].firstSub);
       }
-      return b[1].correct - a[1].correct;
+      if (a[1].correct !== b[1].correct) return b[1].correct - a[1].correct;
+      return a[1].firstSub.localeCompare(b[1].firstSub);
     })
     .slice(0, 10)
     .map(([id, stats], i) => ({
