@@ -29,6 +29,8 @@ const POINTS_PER_MATCH = 10;
 const POINTS_PER_WRONG = -1;
 const MAX_TIME = 180; // 3 minutes in seconds
 
+const TOTAL_PAIRS = Math.floor(TOTAL_CARDS / 2);
+
 interface Card {
   id: number;
   emoji: string;
@@ -46,14 +48,15 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function initCards(): Card[] {
-  const pairs = shuffleArray([...EMOJIS, ...EMOJIS]);
+  const chosen = shuffleArray([...EMOJIS]).slice(0, TOTAL_PAIRS);
+  const pairs = shuffleArray([...chosen, ...chosen]);
   const cards: Card[] = pairs.map((emoji, i) => ({
     id: i,
     emoji,
     isFlipped: false,
     isMatched: false,
   }));
-  while (cards.length < TOTAL_CARDS) {
+  if (TOTAL_CARDS % 2 !== 0) {
     cards.push({ id: cards.length, emoji: "", isFlipped: true, isMatched: true });
   }
   return cards;
@@ -160,7 +163,7 @@ function NonTechEvent1() {
           setMatchedPairs(newPairs);
           setCorrectMatches((c) => c + 1);
           setScore((s) => s + POINTS_PER_MATCH);
-          if (newPairs >= EMOJIS.length) {
+          if (newPairs >= TOTAL_PAIRS) {
             setGameComplete(true);
           }
         }, 300);
@@ -226,7 +229,7 @@ function NonTechEvent1() {
   const timePercent = (timeLeft / MAX_TIME) * 100;
   const isLowTime = timeLeft <= 30;
   const isTimeUp = timeLeft === 0;
-  const progressPercent = (matchedPairs / EMOJIS.length) * 100;
+  const progressPercent = (matchedPairs / TOTAL_PAIRS) * 100;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4">
@@ -235,7 +238,7 @@ function NonTechEvent1() {
         <div className="text-xs uppercase tracking-widest text-white/50">Non-Tech · Event 1 · Game</div>
         <h1 className="mt-1 text-2xl font-bold text-white">Memory Match</h1>
         <p className="mt-1 text-sm text-white/50">
-          Match all {EMOJIS.length} pairs before time runs out. +{POINTS_PER_MATCH} per match, {POINTS_PER_WRONG} per miss.
+          Match all {TOTAL_PAIRS} pairs before time runs out. +{POINTS_PER_MATCH} per match, {POINTS_PER_WRONG} per miss.
         </p>
       </div>
 
@@ -308,7 +311,7 @@ function NonTechEvent1() {
           />
         </div>
         <div className="mt-1 text-right text-xs text-white/30">
-          {matchedPairs}/{EMOJIS.length} pairs matched
+          {matchedPairs}/{TOTAL_PAIRS} pairs matched
         </div>
       </GlassCard>
 
@@ -340,7 +343,7 @@ function NonTechEvent1() {
           <div className="text-center space-y-2">
             <CheckCircle2 className="mx-auto h-8 w-8 text-primary" />
             <div className="text-lg font-bold text-white">
-              {matchedPairs >= EMOJIS.length ? "All pairs matched!" : "Time's up!"}
+              {matchedPairs >= TOTAL_PAIRS ? "All pairs matched!" : "Time's up!"}
             </div>
             <div className="flex items-center justify-center gap-6 text-sm text-white/60">
               <span>Score: <strong className="text-white">{score}</strong></span>
