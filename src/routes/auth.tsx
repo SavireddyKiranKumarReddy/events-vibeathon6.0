@@ -27,14 +27,14 @@ export function MobileGate() {
   );
 }
 
+const DEFAULT_PASSWORD = "vibeathon2026";
+
 function AuthPage() {
   const nav = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     let cancelled = false;
@@ -64,50 +64,21 @@ function AuthPage() {
     };
   }, [nav]);
 
-  async function signInWithGoogle() {
-    setError(null);
-    setDenied(false);
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin + "/auth",
-        },
-      });
-      if (error) setError(error.message ?? "Sign-in failed");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function signInWithEmail(e: React.FormEvent) {
+  async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setDenied(false);
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin + "/auth" },
-        });
-        if (error) setError(error.message);
-        else setError(null);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) {
-          if (error.message.includes("Invalid login")) {
-            setError("Invalid email or password. If you haven't signed up yet, switch to Sign Up.");
-          } else {
-            setError(error.message);
-          }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: DEFAULT_PASSWORD,
+      });
+      if (error) {
+        if (error.message.includes("Invalid login")) {
+          setError("Invalid email. Please check your email and try again.");
+        } else {
+          setError(error.message);
         }
       }
     } catch (e) {
@@ -127,25 +98,10 @@ function AuthPage() {
           </div>
           <h1 className="mt-2 text-3xl font-semibold text-white">Team Lead Sign In</h1>
           <p className="mt-2 text-sm text-white/60">
-            Only invited team leads can access this platform.
+            Enter your registered email to sign in.
           </p>
 
-          <button
-            onClick={signInWithGoogle}
-            disabled={loading}
-            className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
-          >
-            <GoogleIcon />
-            {loading ? "Opening Google…" : "Sign in with Google"}
-          </button>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" />
-            <span className="text-xs text-white/40">or</span>
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
-
-          <form onSubmit={signInWithEmail} className="space-y-3 text-left">
+          <form onSubmit={signIn} className="mt-6 space-y-3 text-left">
             <label className="block">
               <div className="text-xs text-white/60">Email</div>
               <input
@@ -153,7 +109,8 @@ function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-primary"
+                autoFocus
+                className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-primary"
                 placeholder="you@example.com"
               />
             </label>
@@ -161,29 +118,19 @@ function AuthPage() {
               <div className="text-xs text-white/60">Password</div>
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-primary"
-                placeholder="Min 6 characters"
+                value={DEFAULT_PASSWORD}
+                readOnly
+                className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/40 outline-none"
               />
             </label>
             <button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || !email}
               className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
             >
-              {loading ? "Please wait…" : mode === "login" ? "Sign in with Email" : "Create Account"}
+              {loading ? "Signing in…" : "Sign In"}
             </button>
           </form>
-
-          <button
-            onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); }}
-            className="mt-3 text-xs text-primary hover:underline"
-          >
-            {mode === "login" ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-          </button>
 
           {error && (
             <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-white">
@@ -199,13 +146,5 @@ function AuthPage() {
       </div>
       <MobileGate />
     </>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24">
-      <path fill="#fff" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4a6.1 6.1 0 1 1 0-12.2c1.9 0 3.2.8 4 1.5l2.7-2.6C16.9 3.1 14.7 2 12 2a10 10 0 1 0 0 20c5.8 0 9.6-4.1 9.6-9.8 0-.7-.1-1.3-.2-2H12z" />
-    </svg>
   );
 }
