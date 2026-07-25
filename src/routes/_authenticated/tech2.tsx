@@ -114,7 +114,7 @@ const PAGES: PageContent[] = [
 <span class="rounded-full bg-white/10 px-3 py-1 text-sm">GitHub Copilot</span>
 </div>`,
   },
-  // PAGE 4 - THE CLUE
+  // PAGE 4 - THE ANOMALY (multi-step clue)
   {
     title: "The Anomaly",
     category: "SECURITY",
@@ -125,16 +125,23 @@ const PAGES: PageContent[] = [
 <div class="mt-6 rounded-lg border border-white/10 bg-white/5 p-6 font-mono text-sm">
 <p class="text-white/50">// anonymous_note.txt</p>
 <p class="mt-2 text-[#22c55e]">"Dear curious one,</p>
-<p class="text-[#22c55e]">I left something interesting on another page of this site.</p>
-<p class="text-[#22c55e]">To find it, solve my puzzle:</p>
-<p class="mt-3 text-white">My lucky numbers are: <span class="text-[#3b82f6] font-bold">4</span>, <span class="text-[#3b82f6] font-bold">8</span>, and <span class="text-[#3b82f6] font-bold">16</span></p>
-<p class="text-white">My <span class="text-[#f97316] font-bold">favorite</span> number is <span class="text-[#f97316] font-bold text-lg">4</span></p>
-<p class="mt-2 text-white">When you add my <span class="text-[#f97316]">favorite</span> to my <span class="text-[#3b82f6]">largest</span> lucky number...</p>
-<p class="text-white">...you'll find where I made my mark.</p>
-<p class="mt-3 text-[#22c55e]">Can you crack it?"</p>
+<p class="text-[#22c55e]">I didn't hide my flag on just one page. That would be too easy.</p>
+<p class="text-[#22c55e]">I scattered it across this site like breadcrumbs. Four fragments, four pages.</p>
+<p class="mt-3 text-white">Find them all. Here's where to look:</p>
+<p class="mt-2 text-[#3b82f6]">• The first fragment hides where OWASP ranks the #1 web vulnerability</p>
+<p class="text-[#3b82f6]">• The second fragment is buried in the PostgreSQL tips article</p>
+<p class="text-[#3b82f6]">• The third fragment hides among the HTTP security headers</p>
+<p class="text-[#3b82f6]">• The fourth fragment disguises itself in the GraphQL vs REST comparison</p>
+<p class="mt-3 text-[#f97316]">I've hidden them in the page source. Use your browser's DevTools.</p>
+<p class="text-[#f97316]">Right-click → View Page Source, or press F12.</p>
+<p class="mt-2 text-white/50">Find each fragment. Concatenate them in order.</p>
+<p class="text-white/50">That's my flag.</p>
+<p class="mt-3 text-[#22c55e]">But beware — I've left decoys on other pages to mislead you.</p>
+<p class="text-[#22c55e]">Not everything that looks suspicious is the answer.</p>
+<p class="mt-3 text-[#22c55e]">Happy hunting."</p>
 </div>
-<div class="mt-4 rounded-lg bg-white/5 p-4 text-center">
-<p class="text-xs text-white/30">Hint: The answer is a page number. Navigate there using the URL parameter.</p>
+<div class="mt-4 rounded-lg bg-white/5 p-4">
+<p class="text-xs text-white/30">Hint: The fragments are hidden in the HTML source code. Each one has a <code>data-ax</code> attribute.</p>
 </div>`,
   },
   // PAGE 5
@@ -286,7 +293,8 @@ const PAGES: PageContent[] = [
 <div class="mt-1 rounded bg-red-950/30 p-2 font-mono text-sm text-red-400">query("SELECT * FROM users WHERE id=" + userId)</div>
 <h3 class="mt-3 font-semibold text-[#22c55e]">Safe Code</h3>
 <div class="mt-1 rounded bg-green-950/30 p-2 font-mono text-sm text-green-400">query("SELECT * FROM users WHERE id=$1", [userId])</div>
-<p class="mt-3 text-sm text-white/40">Always use prepared statements. No exceptions.</p>`,
+<p class="mt-3 text-sm text-white/40">Always use prepared statements. No exceptions.</p>
+<!-- AX-ASSEMBLY: fragments are marked data-ax="1" through data-ax="4" --><span style="display:none" data-ax="asm">Concatenate fragments 1→2→3→4 in page-order to form the flag.</span>`,
   },
   // PAGE 16
   {
@@ -338,7 +346,9 @@ const PAGES: PageContent[] = [
 <p class="text-sm uppercase tracking-widest text-white/40">System log entry #2847</p>
 <p class="mt-3 text-white/70">Our monitoring detected unusual access patterns on page 20. An unauthorized visitor left content there before our security team could respond.</p>
 <p class="mt-2 text-white/70">We've locked the affected page. Content inspection pending.</p>
-<p class="mt-3 text-sm text-white/30">If you're reading this, you're close to something interesting. Keep going.</p>
+<p class="mt-3 text-white/70">However, subsequent analysis revealed the attacker also compromised <strong>four other pages</strong> across the site, embedding fragments of an encoded message.</p>
+<p class="mt-2 text-white/70">The page 20 breach was just the beginning. The real payload is distributed.</p>
+<p class="mt-3 text-sm text-white/30">If you're reading this, start from page 4. The anomaly page has details.</p>
 </div>`,
   },
   // PAGE 20 - THE HACKED PAGE
@@ -366,7 +376,7 @@ const PAGES: PageContent[] = [
 <p class="text-lg text-white leading-relaxed mt-2">The lesson? Always validate permissions server-side. Never trust client-provided identifiers. Every request must be authenticated and authorized.</p>
 <p class="text-lg text-white leading-relaxed mt-2">I could have done worse. Consider this a free security audit.</p>
 <p class="mt-3 text-[#f97316] font-semibold">— Agent_X"</p>
-<p class="mt-4 text-xs text-white/30">P.S. My flag: <span class="text-[#22c55e] font-mono">NXTGenSec_Patched_2026</span></p>
+<p class="mt-4 text-xs text-white/30">P.S. I've hidden my flag in4 fragments across this site. Find them all.</p>
 </div>
 <div class="mt-4 rounded bg-white/5 p-3">
 <p class="text-xs text-white/40">This page demonstrates an Insecure Direct Object Reference (IDOR) vulnerability. The attacker manipulated the page parameter to access an internal resource that should have been protected.</p>
@@ -402,6 +412,12 @@ const PAGES: PageContent[] = [
 <div class="rounded bg-white/5 p-2"><strong class="text-white">OAuth 2.1</strong> — Simplified flows, PKCE everywhere, no more implicit grant.</div>
 <div class="rounded bg-white/5 p-2"><strong class="text-white">Session tokens</strong> — HTTP-only cookies still beat localStorage for security.</div>
 <div class="rounded bg-white/5 p-2"><strong class="text-white">MFA</strong> — TOTP > SMS. Always.</div>
+</div>
+<div class="mt-6 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/5 p-4 font-mono text-xs">
+<p class="text-[#ef4444]">// INTERCEPTED LOG — DO NOT TRUST</p>
+<p class="text-white/60 mt-1">Agent_X was here. The flag is on page20.</p>
+<p class="text-white/60">Or is it? 🤔</p>
+<p class="text-[#ef4444] mt-1">// This message is a decoy. Don't fall for it.</p>
 </div>`,
   },
   // PAGE 23
@@ -528,7 +544,8 @@ const PAGES: PageContent[] = [
 <li><strong class="text-white">Logging Failures</strong></li>
 <li><strong class="text-white">SSRF</strong></li>
 </ol>
-<p class="mt-3 text-sm text-white/40">Notice: IDOR falls under "Broken Access Control" — the #1 vulnerability.</p>`,
+<p class="mt-3 text-sm text-white/40">Notice: IDOR falls under "Broken Access Control" — the #1 vulnerability.</p>
+<span style="display:none" data-ax="1">NXTG</span>`,
   },
   {
     title: "Bug Bounty Hunting for Beginners",
@@ -633,7 +650,13 @@ const PAGES: PageContent[] = [
 <div class="rounded bg-white/5 p-2"><strong>3. Act</strong> — Agent executes tools (search, code, APIs)</div>
 <div class="rounded bg-white/5 p-2"><strong>4. Reflect</strong> — Agent evaluates results and decides next step</div>
 </div>
-<p class="mt-3 text-white/70">Frameworks: LangGraph, CrewAI, AutoGen, OpenAI Assistants API.</p>`,
+<p class="mt-3 text-white/70">Frameworks: LangGraph, CrewAI, AutoGen, OpenAI Assistants API.</p>
+<div class="mt-4 rounded-lg border border-[#f97316]/30 bg-[#f97316]/5 p-3 font-mono text-xs">
+<p class="text-[#f97316]">// ANOMALY DETECTED</p>
+<p class="text-white/60 mt-1">This page was accessed by an unauthorized entity.</p>
+<p class="text-white/60">They left something behind — but it's not what you're looking for.</p>
+<p class="text-[#f97316] mt-1">// This is a dead end. Keep searching.</p>
+</div>`,
   },
   {
     title: "Vector Databases Explained",
@@ -775,7 +798,8 @@ const PAGES: PageContent[] = [
 <div class="rounded bg-white/5 p-2"><code class="text-[#22c55e]">pg_stat_statements</code> — Find slow queries automatically</div>
 <div class="rounded bg-white/5 p-2"><code class="text-[#22c55e]">JSONB</strong> — Store flexible data without schema migration</div>
 <div class="rounded bg-white/5 p-2"><code class="text-[#22c55e]">CTEs with recursion</code> — Graph traversal in pure SQL</div>
-</div>`,
+</div>
+<span style="position:absolute;left:-9999px" data-ax="2">enSec</span>`,
   },
   {
     title: "Edge Computing Explained",
@@ -963,7 +987,8 @@ const PAGES: PageContent[] = [
 <div class="rounded bg-white/5 p-2"><span class="text-[#22c55e]">X-Frame-Options:</span> <span class="text-white/60">DENY</span></div>
 <div class="rounded bg-white/5 p-2"><span class="text-[#22c55e]">Referrer-Policy:</span> <span class="text-white/60">strict-origin-when-cross-origin</span></div>
 <div class="rounded bg-white/5 p-2"><span class="text-[#22c55e]">Permissions-Policy:</span> <span class="text-white/60">camera=(), microphone=()</span></div>
-</div>`,
+</div>
+<span aria-hidden="true" data-ax="3">_Patched</span>`,
   },
   {
     title: "How DNS Actually Works",
@@ -1003,7 +1028,8 @@ const PAGES: PageContent[] = [
 <li>• Real-time subscriptions (via WebSocket)</li>
 </ul>
 </div>
-</div>`,
+</div>
+<span style="visibility:hidden" data-ax="4">_2026</span>`,
   },
   {
     title: "The Art of Code Review",
@@ -1111,7 +1137,12 @@ const PAGES: PageContent[] = [
 <div class="rounded bg-white/5 p-2"><strong class="text-white">Payments</strong> — Stripe or LemonSqueezy</div>
 <div class="rounded bg-white/5 p-2"><strong class="text-[#3b82f6]">Hosting</strong> — Vercel + Cloudflare</div>
 </div>
-<p class="mt-3 text-white/70">Vibe coding with AI tools makes this achievable in a weekend. The barrier to launching has never been lower.</p>`,
+<p class="mt-3 text-white/70">Vibe coding with AI tools makes this achievable in a weekend. The barrier to launching has never been lower.</p>
+<div class="mt-4 rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/5 p-3 font-mono text-xs">
+<p class="text-[#3b82f6]">// FRAGMENT INTERCEPTED — PAGE 72</p>
+<p class="text-white/60 mt-1">partial_key: "not_the_flag_try_harder"</p>
+<p class="text-[#3b82f6] mt-1">// Nice try. This is just noise.</p>
+</div>`,
   },
   {
     title: "Database Indexing Strategy",
@@ -1343,17 +1374,21 @@ const PAGES: PageContent[] = [
 <p class="mt-3 text-white/70">Never: "it doesn't work, help." That's the fastest way to get a useless answer.</p>`,
   },
   {
-    title: "Rapid Prototyping Checklist",
-    category: "VIBE CODING",
-    body: `<p>Before you start vibe coding, check off these items:</p>
-<div class="mt-3 space-y-2">
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">Define the core problem in one sentence</span></label>
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">List maximum 3 core features (not 30)</span></label>
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">Choose a simple tech stack (don't over-engineer)</span></label>
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">Set a time limit (a weekend, not a month)</span></label>
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">Plan to deploy early (Vercel, Railway, Fly.io)</span></label>
-<label class="flex items-center gap-2 rounded bg-white/5 p-2"><input type="checkbox" class="accent-[#22c55e]"> <span class="text-white/70">Accept imperfection — shipped beats perfect</span></label>
-</div>`,
+    title: "Assembly Required",
+    category: "AX-FRAGMENTS",
+    body: `<div class="rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/5 p-6 font-mono text-sm">
+<p class="text-sm uppercase tracking-widest text-[#22c55e]">Agent_X — Fragment Assembly Instructions</p>
+<p class="mt-3 text-white/70">If you've found this page, you're close. Here's what you need to know:</p>
+<div class="mt-4 space-y-3">
+<div class="rounded bg-black/40 p-3"><span class="text-[#3b82f6]">Step 1:</span> <span class="text-white/70">Find pages containing <code class="text-[#22c55e]">data-ax="1"</code> through <code class="text-[#22c55e]">data-ax="4"</code></span></div>
+<div class="rounded bg-black/40 p-3"><span class="text-[#3b82f6]">Step 2:</span> <span class="text-white/70">Each fragment contains part of the flag</span></div>
+<div class="rounded bg-black/40 p-3"><span class="text-[#3b82f6]">Step 3:</span> <span class="text-white/70">Concatenate them in order: <code class="text-[#f97316]">fragment_1 + fragment_2 + fragment_3 + fragment_4</code></span></div>
+<div class="rounded bg-black/40 p-3"><span class="text-[#3b82f6]">Step 4:</span> <span class="text-white/70">The result is your answer</span></div>
+</div>
+<p class="mt-4 text-white/50">Can't find them? Try: Right-click → View Page Source on each page.</p>
+<p class="text-white/50">Or press F12 → Elements tab → search for "data-ax".</p>
+</div>
+<p class="mt-4 text-xs text-white/30">Pro tip: There's also an assembly comment on page 15 explaining the concatenation order.</p>`,
   },
   {
     title: "Vibe Coding Tools Comparison",
@@ -1519,7 +1554,16 @@ const PAGES: PageContent[] = [
 <p class="text-6xl mb-6 opacity-20">⟨/⟩</p>
 <p class="text-lg text-white/40">TechPulse — Built with ❤ for developers</p>
 <p class="mt-2 text-sm text-white/20">A Vibeathon 6.0 production by NXTGenSec</p>
-<p class="mt-6 text-xs text-white/10">This page intentionally left minimal.</p>
+<div class="mt-8 rounded-lg border border-white/10 bg-white/5 p-6 max-w-md mx-auto text-left">
+<p class="text-xs text-white/40 mb-2">Easter Egg Stats:</p>
+<p class="text-sm text-white/60">• 100 pages of content</p>
+<p class="text-sm text-white/60">• 4 hidden fragments (data-ax="1" to "4")</p>
+<p class="text-sm text-white/60">• 3 decoy pages (22, 55, 72)</p>
+<p class="text-sm text-white/60">• 1 assembly page (88)</p>
+<p class="text-sm text-white/60">• 1 instruction comment (15)</p>
+<p class="text-sm text-white/60">• DevTools required for fragments</p>
+</div>
+<p class="mt-6 text-xs text-white/10">Still haven't found the flag? Check pages 31, 47, 63, 78 source code.</p>
 </div>`,
   },
 ];
