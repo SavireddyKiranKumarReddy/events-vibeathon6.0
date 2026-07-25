@@ -118,7 +118,7 @@ export const getEvent = createServerFn({ method: "GET" })
 export const submitAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { eventId: string; answer: string; score?: number }) =>
-    z.object({ eventId: z.string().uuid(), answer: z.string().min(1).max(2000), score: z.number().int().nonnegative().optional() }).parse(d),
+    z.object({ eventId: z.string().uuid(), answer: z.string().min(1).max(2000), score: z.number().int().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -128,6 +128,14 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (!team) throw new Error("No team linked to this account");
+
+    // Delete any existing submission for this event+team (allow retakes)
+    await supabase
+      .from("submissions")
+      .delete()
+      .eq("event_id", data.eventId)
+      .eq("team_id", team.id);
+
     const insert: Record<string, any> = {
       event_id: data.eventId,
       team_id: team.id,
@@ -136,7 +144,6 @@ export const submitAnswer = createServerFn({ method: "POST" })
     if (data.score !== undefined) insert.score = data.score;
     const { error } = await supabase.from("submissions").insert(insert);
     if (error) {
-      if (error.code === "23505") throw new Error("You have already submitted for this event");
       throw new Error("Unable to submit your answer. Please try again.");
     }
     return { ok: true };

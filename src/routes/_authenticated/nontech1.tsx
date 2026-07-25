@@ -127,7 +127,7 @@ function NonTechEvent1() {
 
   // Auto-submit on game complete (time up or all matched)
   useEffect(() => {
-    if (gameComplete && parsed && !parsed.submission && !hasSubmittedRef.current) {
+    if (gameComplete && parsed && !hasSubmittedRef.current) {
       hasSubmittedRef.current = true;
       submit.mutate({ answer: "solved", score });
     }
@@ -205,21 +205,6 @@ function NonTechEvent1() {
         <h1 className="text-3xl font-semibold text-white">Non-Tech Event 1: Memory Match</h1>
         <p className="text-white/60">Not yet open</p>
         <div className="font-mono text-4xl text-primary">{countdown(ev.start_at)}</div>
-      </div>
-    );
-  }
-
-  if (submission) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-6 px-4">
-        <GlassCard>
-          <div className="flex items-center gap-2 text-primary">
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="font-semibold">Already Submitted</span>
-          </div>
-          <div className="mt-2 text-sm text-white/50">Submitted at {formatIST(submission.submitted_at)}</div>
-          <p className="mt-3 text-xs text-white/50">Submissions are final.</p>
-        </GlassCard>
       </div>
     );
   }
