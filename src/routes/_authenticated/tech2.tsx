@@ -1623,12 +1623,21 @@ function TechEvent2() {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <GlassCard>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-[#22c55e]">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="font-semibold">Answer Submitted</span>
+            <span className="font-semibold">Flag Submitted Successfully!</span>
           </div>
-          <div className="mt-2 text-sm text-white/50">Submitted at {formatIST(submission.submitted_at)}</div>
-          <p className="mt-3 text-xs text-white/50">This event is now locked for your team.</p>
+          <div className="mt-3 text-sm text-white/70">
+            Your answer has been recorded at <span className="font-mono text-white/90">{formatIST(submission.submitted_at)}</span>.
+          </div>
+          <div className="mt-4 rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 p-4">
+            <p className="text-sm text-white/80">
+              Our team will validate your submission and update the leaderboard soon.
+            </p>
+            <p className="mt-1 text-xs text-white/50">
+              This challenge is now locked for your team. You cannot submit again.
+            </p>
+          </div>
         </GlassCard>
       </div>
     );

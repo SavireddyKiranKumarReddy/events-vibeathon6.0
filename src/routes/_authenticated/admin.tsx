@@ -500,7 +500,15 @@ function SubmissionsTable({ eventId }: { eventId: string }) {
               <tr key={s.id}>
                 <td className="py-3 font-mono text-white/50">{i + 1}</td>
                 <td className="py-3 text-white">{s.team?.name ?? "—"} <span className="text-xs text-white/40">· {s.team?.lead_name ?? ""}</span></td>
-                <td className="py-3 text-white/80 max-w-[200px] truncate">{s.answer}</td>
+                <td className="py-3 text-white/80 max-w-[200px]">
+                  {s.answer?.startsWith("http") && (s.answer?.includes(".png") || s.answer?.includes(".jpg") || s.answer?.includes(".jpeg") || s.answer?.includes(".gif") || s.answer?.includes(".webp") || s.answer?.includes("event-submissions")) ? (
+                    <a href={s.answer} target="_blank" rel="noopener noreferrer">
+                      <img src={s.answer} alt="Submission" className="h-16 w-16 rounded border border-white/10 object-cover hover:border-primary transition" />
+                    </a>
+                  ) : (
+                    <span className="truncate block">{s.answer}</span>
+                  )}
+                </td>
                 <td className="py-3 font-mono text-xs text-white/60">{formatIST(s.submitted_at)}</td>
                 <td className="py-3">
                   {s.is_correct ? (

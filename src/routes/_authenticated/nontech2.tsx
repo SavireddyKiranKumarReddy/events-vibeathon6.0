@@ -69,18 +69,27 @@ function NonTechEvent2() {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <GlassCard>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-[#22c55e]">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="font-semibold">Design Submitted</span>
+            <span className="font-semibold">Design Submitted Successfully!</span>
           </div>
-          <div className="mt-2 text-sm text-white/50">Submitted at {formatIST(submission.submitted_at)}</div>
+          <div className="mt-3 text-sm text-white/70">
+            Submitted at <span className="font-mono text-white/90">{formatIST(submission.submitted_at)}</span>
+          </div>
           {submission.answer && (
             <div className="mt-4">
               <p className="text-xs text-white/40 mb-2">Your submission:</p>
               <img src={submission.answer} alt="Your submission" className="max-h-64 rounded-lg border border-white/10" />
             </div>
           )}
-          <p className="mt-3 text-xs text-white/50">This event is now locked for your team. Our judges will review all submissions.</p>
+          <div className="mt-4 rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 p-4">
+            <p className="text-sm text-white/80">
+              Your submission is successful! Our team will validate and update you soon.
+            </p>
+            <p className="mt-1 text-xs text-white/50">
+              This challenge is now locked for your team. You cannot submit again.
+            </p>
+          </div>
         </GlassCard>
       </div>
     );
