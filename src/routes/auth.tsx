@@ -64,7 +64,26 @@ function AuthPage() {
     };
   }, [nav]);
 
-  async function signIn(e: React.FormEvent) {
+  async function signInWithGoogle() {
+    setError(null);
+    setDenied(false);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/auth",
+        },
+      });
+      if (error) setError(error.message ?? "Sign-in failed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function signInWithEmail(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setDenied(false);
@@ -76,7 +95,7 @@ function AuthPage() {
       });
       if (error) {
         if (error.message.includes("Invalid login")) {
-          setError("Invalid email. Please check your email and try again.");
+          setError("Invalid email or account not found. Try Google Sign-In, or contact admin.");
         } else {
           setError(error.message);
         }
@@ -98,10 +117,27 @@ function AuthPage() {
           </div>
           <h1 className="mt-2 text-3xl font-semibold text-white">Team Lead Sign In</h1>
           <p className="mt-2 text-sm text-white/60">
-            Enter your registered email to sign in.
+            Sign in with Google or use your email with the default password.
           </p>
 
-          <form onSubmit={signIn} className="mt-6 space-y-3 text-left">
+          <button
+            onClick={signInWithGoogle}
+            disabled={loading}
+            className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#fff" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4a6.1 6.1 0 1 1 0-12.2c1.9 0 3.2.8 4 1.5l2.7-2.6C16.9 3.1 14.7 2 12 2a10 10 0 1 0 0 20c5.8 0 9.6-4.1 9.6-9.8 0-.7-.1-1.3-.2-2H12z" />
+            </svg>
+            {loading ? "Opening Google…" : "Sign in with Google"}
+          </button>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-white/40">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <form onSubmit={signInWithEmail} className="space-y-3 text-left">
             <label className="block">
               <div className="text-xs text-white/60">Email</div>
               <input
@@ -128,7 +164,7 @@ function AuthPage() {
               disabled={loading || !email}
               className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
             >
-              {loading ? "Signing in…" : "Sign In"}
+              {loading ? "Signing in…" : "Sign In with Email"}
             </button>
           </form>
 
