@@ -186,9 +186,20 @@ export const getLeaderboards = createServerFn({ method: "GET" })
     const { data: subs } = await supabaseAdmin
       .from("submissions")
       .select("event_id, team_id, submitted_at, auto_correct, admin_override, score");
-    const { data: teams } = await supabaseAdmin.from("teams").select("id, name, lead_name");
+    const allTeams: { id: string; name: string; lead_name: string }[] = [];
+    let teamFrom = 0;
+    while (true) {
+      const { data: page } = await supabaseAdmin
+        .from("teams")
+        .select("id, name, lead_name")
+        .range(teamFrom, teamFrom + 999);
+      if (!page || page.length === 0) break;
+      allTeams.push(...page);
+      if (page.length < 1000) break;
+      teamFrom += 1000;
+    }
 
-    return { events: events ?? [], submissions: subs ?? [], teams: teams ?? [], isAdmin };
+    return { events: events ?? [], submissions: subs ?? [], teams: allTeams, isAdmin };
   });
 
 // ---- Admin: teams ----
