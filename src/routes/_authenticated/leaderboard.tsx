@@ -141,9 +141,13 @@ function LB() {
                           <span className={`w-8 text-center font-mono text-lg ${i === 0 ? "text-primary font-bold" : "text-white/50"}`}>
                             {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
                           </span>
-                          <span className="text-white font-semibold">{team.name}</span>
-                          {team.lead_name && <span className="text-sm text-white/40">— {team.lead_name}</span>}
-                          {!isNonTech && s.submitted_at && <span className="text-xs text-white/30 ml-1">{formatIST(s.submitted_at)}</span>}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-semibold">{team.name}</span>
+                              {team.lead_name && <span className="text-sm text-white/40">— {team.lead_name}</span>}
+                            </div>
+                            {!isNonTech && s.submitted_at && <span className="text-xs text-white/30">{formatIST(s.submitted_at)}</span>}
+                          </div>
                         </div>
                         {isNonTech && s.score != null && (
                           <span className="text-xs font-bold text-primary">{s.score} pts</span>
