@@ -18,6 +18,7 @@ import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedNontech1RouteImport } from './routes/_authenticated/nontech1'
 import { Route as AuthenticatedTech1RouteImport } from './routes/_authenticated/tech1'
+import { Route as AuthenticatedTech2RouteImport } from './routes/_authenticated/tech2'
 import { Route as AuthenticatedEventsTrackSlotRouteImport } from './routes/_authenticated/events.$track.$slot'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,11 @@ const AuthenticatedTech1Route = AuthenticatedTech1RouteImport.update({
   path: '/tech1',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTech2Route = AuthenticatedTech2RouteImport.update({
+  id: '/tech2',
+  path: '/tech2',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEventsTrackSlotRoute =
   AuthenticatedEventsTrackSlotRouteImport.update({
     id: '/$track/$slot',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/nontech1': typeof AuthenticatedNontech1Route
   '/tech1': typeof AuthenticatedTech1Route
+  '/tech2': typeof AuthenticatedTech2Route
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesByTo {
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/nontech1': typeof AuthenticatedNontech1Route
   '/tech1': typeof AuthenticatedTech1Route
+  '/tech2': typeof AuthenticatedTech2Route
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesById {
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/nontech1': typeof AuthenticatedNontech1Route
   '/_authenticated/tech1': typeof AuthenticatedTech1Route
+  '/_authenticated/tech2': typeof AuthenticatedTech2Route
   '/_authenticated/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRouteTypes {
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/nontech1'
     | '/tech1'
+    | '/tech2'
     | '/events/$track/$slot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/nontech1'
     | '/tech1'
+    | '/tech2'
     | '/events/$track/$slot'
   id:
     | '__root__'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leaderboard'
     | '/_authenticated/nontech1'
     | '/_authenticated/tech1'
+    | '/_authenticated/tech2'
     | '/_authenticated/events/$track/$slot'
   fileRoutesById: FileRoutesById
 }
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTech1RouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tech2': {
+      id: '/_authenticated/tech2'
+      path: '/tech2'
+      fullPath: '/tech2'
+      preLoaderRoute: typeof AuthenticatedTech2RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/events/$track/$slot': {
       id: '/_authenticated/events/$track/$slot'
       path: '/$track/$slot'
@@ -243,6 +262,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNontech1Route: typeof AuthenticatedNontech1Route
   AuthenticatedTech1Route: typeof AuthenticatedTech1Route
+  AuthenticatedTech2Route: typeof AuthenticatedTech2Route
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -252,6 +272,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNontech1Route: AuthenticatedNontech1Route,
   AuthenticatedTech1Route: AuthenticatedTech1Route,
+  AuthenticatedTech2Route: AuthenticatedTech2Route,
 }
 
 const AuthenticatedRouteRouteWithChildren =
