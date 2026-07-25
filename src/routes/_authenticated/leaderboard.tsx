@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getLeaderboards } from "@/lib/api.functions";
 import { GlassCard } from "@/components/AppShell";
 import { formatIST } from "@/lib/format";
-import { Trophy, Clock, CheckCircle2 } from "lucide-react";
+import { Trophy, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
@@ -16,12 +16,6 @@ export const Route = createFileRoute("/_authenticated/leaderboard")({
   }),
   component: LB,
 });
-
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 function LB() {
   const [track, setTrack] = useState<"tech" | "nontech">("tech");
@@ -34,15 +28,15 @@ function LB() {
 
   const isNonTech = track === "nontech";
 
-  const overall = new Map<string, { correct: number; totalTime: number; count: number }>();
+  const overall = new Map<string, { correct: number; totalScore: number; count: number }>();
   const trackEventIds = new Set(events.map((e: any) => e.id));
   for (const s of d.submissions) {
     if (!trackEventIds.has(s.event_id)) continue;
     const correct = s.admin_override !== null && s.admin_override !== undefined ? s.admin_override : s.auto_correct;
-    const entry = overall.get(s.team_id) ?? { correct: 0, totalTime: 0, count: 0 };
+    const entry = overall.get(s.team_id) ?? { correct: 0, totalScore: 0, count: 0 };
     if (correct) {
       entry.correct += 1;
-      entry.totalTime += s.score ?? 0;
+      entry.totalScore += s.score ?? 0;
       entry.count += 1;
     }
     overall.set(s.team_id, entry);
@@ -52,8 +46,8 @@ function LB() {
     .filter(([, v]) => v.correct > 0)
     .sort((a, b) => {
       if (isNonTech) {
-        if (a[1].correct !== b[1].correct) return b[1].correct - a[1].correct;
-        return a[1].totalTime - b[1].totalTime;
+        if (a[1].totalScore !== b[1].totalScore) return b[1].totalScore - a[1].totalScore;
+        return b[1].correct - a[1].correct;
       }
       return b[1].correct - a[1].correct;
     })
@@ -97,7 +91,7 @@ function LB() {
         </h2>
         <div className="mt-1 text-xs text-white/40">
           {isNonTech
-            ? "Ranked by events completed, then by fastest total time"
+            ? "Ranked by total points across all events"
             : "Ranked by number of correct answers"}
         </div>
         <div className="mt-4 divide-y divide-white/10">
@@ -115,9 +109,9 @@ function LB() {
                 <span className="inline-flex items-center gap-1 rounded-md bg-green-500/20 px-2 py-1 text-green-400">
                   <CheckCircle2 className="h-3 w-3" /> {r.correct}
                 </span>
-                {isNonTech && r.totalTime > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/20 px-2 py-1 text-blue-400">
-                    <Clock className="h-3 w-3" /> {formatTime(r.totalTime)}
+                {isNonTech && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-yellow-500/20 px-2 py-1 text-yellow-400 font-semibold">
+                    🏆 {r.totalScore} pts
                   </span>
                 )}
               </div>
@@ -138,9 +132,9 @@ function LB() {
             })
             .sort((a: any, b: any) => {
               if (isNonTech) {
-                const aTime = a.score ?? 9999;
-                const bTime = b.score ?? 9999;
-                return aTime - bTime;
+                const aScore = a.score ?? 0;
+                const bScore = b.score ?? 0;
+                return bScore - aScore; // Higher score first
               }
               return +new Date(a.submitted_at) - +new Date(b.submitted_at);
             });
@@ -155,13 +149,13 @@ function LB() {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-white/50">Started {formatIST(e.start_at)}</div>
-                  <div className="text-xs text-white/40">{correctSubs}/{totalSubs} correct</div>
+                  <div className="text-xs text-white/40">{correctSubs}/{totalSubs} submissions</div>
                 </div>
               </div>
               {!visible ? (
                 <div className="mt-4 text-sm text-white/40">Hidden by admin.</div>
               ) : subs.length === 0 ? (
-                <div className="mt-4 text-sm text-white/50">No correct submissions yet.</div>
+                <div className="mt-4 text-sm text-white/50">No submissions yet.</div>
               ) : (
                 <div className="mt-3 divide-y divide-white/10">
                   {subs.map((s: any, i: number) => (
@@ -177,8 +171,8 @@ function LB() {
                       </div>
                       <div className="flex items-center gap-2">
                         {isNonTech && s.score != null && (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/20 px-2 py-0.5 text-[11px] text-blue-400">
-                            <Clock className="h-3 w-3" /> {formatTime(s.score)}
+                          <span className="inline-flex items-center gap-1 rounded-md bg-yellow-500/20 px-2 py-0.5 text-[11px] font-semibold text-yellow-400">
+                            🏆 {s.score} pts
                           </span>
                         )}
                         <span className="font-mono text-xs text-white/50">
