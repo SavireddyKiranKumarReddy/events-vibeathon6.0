@@ -123,7 +123,10 @@ export const submitAnswer = createServerFn({ method: "POST" })
       team_id: team.id,
       answer: data.answer,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "23505") throw new Error("You have already submitted for this event");
+      throw new Error("Unable to submit your answer. Please try again.");
+    }
     return { ok: true };
   });
 

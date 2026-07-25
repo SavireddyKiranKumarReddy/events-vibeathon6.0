@@ -16,6 +16,8 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
+import { Route as AuthenticatedNontech1RouteImport } from './routes/_authenticated/nontech1'
+import { Route as AuthenticatedTech1RouteImport } from './routes/_authenticated/tech1'
 import { Route as AuthenticatedEventsTrackSlotRouteImport } from './routes/_authenticated/events.$track.$slot'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +55,16 @@ const AuthenticatedLeaderboardRoute =
     path: '/leaderboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNontech1Route = AuthenticatedNontech1RouteImport.update({
+  id: '/nontech1',
+  path: '/nontech1',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTech1Route = AuthenticatedTech1RouteImport.update({
+  id: '/tech1',
+  path: '/tech1',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEventsTrackSlotRoute =
   AuthenticatedEventsTrackSlotRouteImport.update({
     id: '/$track/$slot',
@@ -67,6 +79,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/nontech1': typeof AuthenticatedNontech1Route
+  '/tech1': typeof AuthenticatedTech1Route
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +90,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/nontech1': typeof AuthenticatedNontech1Route
+  '/tech1': typeof AuthenticatedTech1Route
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesById {
@@ -87,6 +103,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
+  '/_authenticated/nontech1': typeof AuthenticatedNontech1Route
+  '/_authenticated/tech1': typeof AuthenticatedTech1Route
   '/_authenticated/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRouteTypes {
@@ -98,6 +116,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/leaderboard'
+    | '/nontech1'
+    | '/tech1'
     | '/events/$track/$slot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +127,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/leaderboard'
+    | '/nontech1'
+    | '/tech1'
     | '/events/$track/$slot'
   id:
     | '__root__'
@@ -117,6 +139,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
     | '/_authenticated/leaderboard'
+    | '/_authenticated/nontech1'
+    | '/_authenticated/tech1'
     | '/_authenticated/events/$track/$slot'
   fileRoutesById: FileRoutesById
 }
@@ -177,6 +201,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/nontech1': {
+      id: '/_authenticated/nontech1'
+      path: '/nontech1'
+      fullPath: '/nontech1'
+      preLoaderRoute: typeof AuthenticatedNontech1RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tech1': {
+      id: '/_authenticated/tech1'
+      path: '/tech1'
+      fullPath: '/tech1'
+      preLoaderRoute: typeof AuthenticatedTech1RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/events/$track/$slot': {
       id: '/_authenticated/events/$track/$slot'
       path: '/$track/$slot'
@@ -203,6 +241,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
+  AuthenticatedNontech1Route: typeof AuthenticatedNontech1Route
+  AuthenticatedTech1Route: typeof AuthenticatedTech1Route
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -210,6 +250,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
+  AuthenticatedNontech1Route: AuthenticatedNontech1Route,
+  AuthenticatedTech1Route: AuthenticatedTech1Route,
 }
 
 const AuthenticatedRouteRouteWithChildren =

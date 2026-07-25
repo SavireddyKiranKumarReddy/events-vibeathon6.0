@@ -78,8 +78,8 @@ function Dashboard() {
                   <div className="text-2xl font-semibold text-primary">{open.title}</div>
                   <div className="mt-2 text-sm text-white/60">Locks when the next event begins.</div>
                   <Link
-                    to="/events/$track/$slot"
-                    params={{ track, slot: String(open.slot) }}
+                    to={open.slot === 1 && track === "tech" ? "/tech1" : open.slot === 1 && track === "nontech" ? "/nontech1" : "/events/$track/$slot"}
+                    params={open.slot === 1 ? undefined : { track, slot: String(open.slot) }}
                     className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:brightness-110"
                   >
                     Open event →
