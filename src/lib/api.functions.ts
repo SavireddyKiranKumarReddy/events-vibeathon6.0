@@ -367,8 +367,19 @@ export const adminListSubmissions = createServerFn({ method: "GET" })
       .eq("event_id", data.eventId)
       .order("submitted_at", { ascending: true });
     if (error) throw error;
-    const { data: teams } = await context.supabase.from("teams").select("id, name, lead_name, lead_email");
-    const teamMap = new Map((teams ?? []).map((t) => [t.id, t]));
+    const allTeams: { id: string; name: string; lead_name: string; lead_email: string }[] = [];
+    let from = 0;
+    while (true) {
+      const { data: page } = await context.supabase
+        .from("teams")
+        .select("id, name, lead_name, lead_email")
+        .range(from, from + 999);
+      if (!page || page.length === 0) break;
+      allTeams.push(...page);
+      if (page.length < 1000) break;
+      from += 1000;
+    }
+    const teamMap = new Map(allTeams.map((t) => [t.id, t]));
     return (subs ?? []).map((s) => ({
       ...s,
       team: teamMap.get(s.team_id) ?? null,
