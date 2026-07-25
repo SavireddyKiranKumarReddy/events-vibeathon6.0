@@ -499,7 +499,7 @@ function SubmissionsTable({ eventId }: { eventId: string }) {
             {rows.map((s: any, i: number) => (
               <tr key={s.id}>
                 <td className="py-3 font-mono text-white/50">{i + 1}</td>
-                <td className="py-3 text-white">{s.team?.name ?? "—"}</td>
+                <td className="py-3 text-white">{s.team?.name ?? "—"} <span className="text-xs text-white/40">· {s.team?.lead_name ?? ""}</span></td>
                 <td className="py-3 text-white/80 max-w-[200px] truncate">{s.answer}</td>
                 <td className="py-3 font-mono text-xs text-white/60">{formatIST(s.submitted_at)}</td>
                 <td className="py-3">

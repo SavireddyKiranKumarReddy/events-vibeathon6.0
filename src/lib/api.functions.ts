@@ -159,7 +159,7 @@ export const getLeaderboards = createServerFn({ method: "GET" })
     const { data: subs } = await supabase
       .from("submissions")
       .select("event_id, team_id, submitted_at, auto_correct, admin_override, score");
-    const { data: teams } = await supabase.from("teams").select("id, name");
+    const { data: teams } = await supabase.from("teams").select("id, name, lead_name");
 
     return { events: events ?? [], submissions: subs ?? [], teams: teams ?? [], isAdmin };
   });
@@ -329,7 +329,7 @@ export const adminListSubmissions = createServerFn({ method: "GET" })
       .eq("event_id", data.eventId)
       .order("submitted_at", { ascending: true });
     if (error) throw error;
-    const { data: teams } = await context.supabase.from("teams").select("id, name, lead_email");
+    const { data: teams } = await context.supabase.from("teams").select("id, name, lead_name, lead_email");
     const teamMap = new Map((teams ?? []).map((t) => [t.id, t]));
     return (subs ?? []).map((s) => ({
       ...s,

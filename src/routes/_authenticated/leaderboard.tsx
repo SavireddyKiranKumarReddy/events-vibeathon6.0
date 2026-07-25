@@ -29,7 +29,7 @@ function LB() {
   const { data } = useQuery({ queryKey: ["leaderboards"], queryFn: () => fn(), refetchInterval: 10000 });
   if (!data) return <div className="text-white/60">Loading…</div>;
   const d = data as any;
-  const teamMap = new Map<string, string>(d.teams.map((t: any) => [t.id, t.name]));
+  const teamMap = new Map<string, { name: string; lead_name: string }>(d.teams.map((t: any) => [t.id, { name: t.name, lead_name: t.lead_name }]));
   const events = d.events.filter((e: any) => e.track === track).sort((a: any, b: any) => a.slot - b.slot);
 
   const isNonTech = track === "nontech";
@@ -59,7 +59,7 @@ function LB() {
     })
     .map(([id, stats], i) => ({
       rank: i + 1,
-      team: teamMap.get(id) ?? "—",
+      team: teamMap.get(id) ?? { name: "—", lead_name: "" },
       ...stats,
     }));
 
@@ -103,12 +103,13 @@ function LB() {
         <div className="mt-4 divide-y divide-white/10">
           {overallSorted.length === 0 && <div className="py-3 text-sm text-white/50">No results yet.</div>}
           {overallSorted.map((r) => (
-            <div key={r.team} className="flex items-center justify-between py-2.5 text-sm">
+            <div key={r.rank + r.team.name} className="flex items-center justify-between py-2.5 text-sm">
               <div className="flex items-center gap-3">
                 <span className={`w-8 text-right font-mono text-lg ${r.rank <= 3 ? "text-primary font-bold" : "text-white/50"}`}>
                   {r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : `#${r.rank}`}
                 </span>
-                <span className="font-semibold text-white">{r.team}</span>
+                <span className="font-semibold text-white">{r.team.name}</span>
+                {r.team.lead_name && <span className="text-xs text-white/40">· {r.team.lead_name}</span>}
               </div>
               <div className="flex items-center gap-3 text-xs">
                 <span className="inline-flex items-center gap-1 rounded-md bg-green-500/20 px-2 py-1 text-green-400">
@@ -169,7 +170,10 @@ function LB() {
                         <span className={`w-6 text-right font-mono ${i === 0 ? "text-primary font-bold" : "text-white/50"}`}>
                           #{i + 1}
                         </span>
-                        <span className="text-white">{teamMap.get(s.team_id) ?? "—"}</span>
+                        <span className="text-white">{(teamMap.get(s.team_id) ?? { name: "—" }).name}</span>
+                        {teamMap.get(s.team_id)?.lead_name && (
+                          <span className="text-xs text-white/40">· {teamMap.get(s.team_id)?.lead_name}</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         {isNonTech && s.score != null && (
