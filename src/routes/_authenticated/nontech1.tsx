@@ -91,7 +91,8 @@ function NonTechEvent1() {
   }, [data]);
 
   const submit = useMutation({
-    mutationFn: (ans: string) => subFn({ data: { eventId: parsed!.event.id, answer: ans } }),
+    mutationFn: ({ answer, score }: { answer: string; score: number }) =>
+      subFn({ data: { eventId: parsed!.event.id, answer, score } }),
     onSuccess: () => { refetch(); },
   });
 
@@ -108,7 +109,7 @@ function NonTechEvent1() {
 
   useEffect(() => {
     if (gameComplete && parsed && !parsed.submission) {
-      submit.mutate("solved");
+      submit.mutate({ answer: "solved", score: time });
     }
   }, [gameComplete]);
 

@@ -117,8 +117,8 @@ export const getEvent = createServerFn({ method: "GET" })
 
 export const submitAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { eventId: string; answer: string }) =>
-    z.object({ eventId: z.string().uuid(), answer: z.string().min(1).max(2000) }).parse(d),
+  .inputValidator((d: { eventId: string; answer: string; score?: number }) =>
+    z.object({ eventId: z.string().uuid(), answer: z.string().min(1).max(2000), score: z.number().int().nonnegative().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -128,11 +128,13 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (!team) throw new Error("No team linked to this account");
-    const { error } = await supabase.from("submissions").insert({
+    const insert: Record<string, any> = {
       event_id: data.eventId,
       team_id: team.id,
       answer: data.answer,
-    });
+    };
+    if (data.score !== undefined) insert.score = data.score;
+    const { error } = await supabase.from("submissions").insert(insert);
     if (error) {
       if (error.code === "23505") throw new Error("You have already submitted for this event");
       throw new Error("Unable to submit your answer. Please try again.");
@@ -156,7 +158,7 @@ export const getLeaderboards = createServerFn({ method: "GET" })
       .select("id, track, slot, title, start_at, end_at, leaderboard_visible, manual_lock");
     const { data: subs } = await supabase
       .from("submissions")
-      .select("event_id, team_id, submitted_at, auto_correct, admin_override");
+      .select("event_id, team_id, submitted_at, auto_correct, admin_override, score");
     const { data: teams } = await supabase.from("teams").select("id, name");
 
     return { events: events ?? [], submissions: subs ?? [], teams: teams ?? [], isAdmin };
@@ -323,7 +325,7 @@ export const adminListSubmissions = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { data: subs, error } = await context.supabase
       .from("submissions")
-      .select("id, answer, submitted_at, auto_correct, admin_override, team_id")
+      .select("id, answer, submitted_at, auto_correct, admin_override, team_id, score")
       .eq("event_id", data.eventId)
       .order("submitted_at", { ascending: true });
     if (error) throw error;

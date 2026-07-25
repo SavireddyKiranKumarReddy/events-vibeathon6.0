@@ -491,6 +491,7 @@ function SubmissionsTable({ eventId }: { eventId: string }) {
               <th className="pb-2">Answer</th>
               <th className="pb-2">Submitted</th>
               <th className="pb-2">Correct</th>
+              <th className="pb-2">Score</th>
               <th className="pb-2 text-right">Override</th>
             </tr>
           </thead>
@@ -499,7 +500,7 @@ function SubmissionsTable({ eventId }: { eventId: string }) {
               <tr key={s.id}>
                 <td className="py-3 font-mono text-white/50">{i + 1}</td>
                 <td className="py-3 text-white">{s.team?.name ?? "—"}</td>
-                <td className="py-3 text-white/80">{s.answer}</td>
+                <td className="py-3 text-white/80 max-w-[200px] truncate">{s.answer}</td>
                 <td className="py-3 font-mono text-xs text-white/60">{formatIST(s.submitted_at)}</td>
                 <td className="py-3">
                   {s.is_correct ? (
@@ -511,6 +512,9 @@ function SubmissionsTable({ eventId }: { eventId: string }) {
                       <XCircle className="h-4 w-4" /> No
                     </span>
                   )}
+                </td>
+                <td className="py-3 font-mono text-xs text-white/60">
+                  {s.score != null ? s.score : "—"}
                 </td>
                 <td className="py-3 text-right">
                   <div className="inline-flex gap-1">

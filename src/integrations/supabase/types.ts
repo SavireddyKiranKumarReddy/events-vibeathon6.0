@@ -72,6 +72,7 @@ export type Database = {
           auto_correct: boolean
           event_id: string
           id: string
+          score: number | null
           submitted_at: string
           team_id: string
         }
@@ -81,6 +82,7 @@ export type Database = {
           auto_correct?: boolean
           event_id: string
           id?: string
+          score?: number | null
           submitted_at?: string
           team_id: string
         }
@@ -90,6 +92,7 @@ export type Database = {
           auto_correct?: boolean
           event_id?: string
           id?: string
+          score?: number | null
           submitted_at?: string
           team_id?: string
         }
