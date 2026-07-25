@@ -129,13 +129,6 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!team) throw new Error("No team linked to this account");
 
-    // Delete any existing submission for this event+team (allow retakes)
-    await supabase
-      .from("submissions")
-      .delete()
-      .eq("event_id", data.eventId)
-      .eq("team_id", team.id);
-
     const insert: Record<string, any> = {
       event_id: data.eventId,
       team_id: team.id,
@@ -144,6 +137,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
     if (data.score !== undefined) insert.score = data.score;
     const { error } = await supabase.from("submissions").insert(insert);
     if (error) {
+      if (error.code === "23505") throw new Error("You have already submitted for this event");
       throw new Error("Unable to submit your answer. Please try again.");
     }
     return { ok: true };

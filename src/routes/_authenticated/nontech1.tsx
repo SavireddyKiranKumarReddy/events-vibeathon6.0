@@ -212,6 +212,21 @@ function NonTechEvent1() {
     );
   }
 
+  if (submission) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6 px-4">
+        <GlassCard>
+          <div className="flex items-center gap-2 text-primary">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-semibold">Already Submitted</span>
+          </div>
+          <div className="mt-2 text-sm text-white/50">Submitted at {formatIST(submission.submitted_at)}</div>
+          <p className="mt-3 text-xs text-white/50">This event is now locked for your team.</p>
+        </GlassCard>
+      </div>
+    );
+  }
+
   if (!open) {
     return (
       <div className="mx-auto max-w-3xl space-y-6 px-4">

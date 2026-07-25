@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getEvent, submitAnswer } from "@/lib/api.functions";
 import { GlassCard } from "@/components/AppShell";
 import { countdown, formatIST } from "@/lib/format";
@@ -29,13 +29,6 @@ function TechEvent1() {
   const [answer, setAnswer] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
-  // Pre-fill with previous answer on first load (for retakes)
-  useEffect(() => {
-    if (data && (data as any).submission && !answer) {
-      setAnswer((data as any).submission.answer);
-    }
-  }, [data]);
-
   const submit = useMutation({
     mutationFn: (ans: string) => subFn({ data: { eventId: data!.event.id, answer: ans } }),
     onSuccess: () => { setAnswer(""); setErr(null); refetch(); },
@@ -52,6 +45,21 @@ function TechEvent1() {
         <h1 className="text-3xl font-semibold text-white">Tech Event 1: Bug Hunt</h1>
         <p className="text-white/60">Not yet open</p>
         <div className="font-mono text-4xl text-primary">{countdown(event.start_at)}</div>
+      </div>
+    );
+  }
+
+  if (submission) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <GlassCard>
+          <div className="flex items-center gap-2 text-primary">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-semibold">Answer Submitted</span>
+          </div>
+          <div className="mt-2 text-sm text-white/50">Submitted at {formatIST(submission.submitted_at)}</div>
+          <p className="mt-3 text-xs text-white/50">This event is now locked for your team.</p>
+        </GlassCard>
       </div>
     );
   }
@@ -171,7 +179,7 @@ function TechEvent1() {
         />
         {err && <div className="mt-2 text-xs text-red-400">{err}</div>}
         <div className="mt-3 flex items-center justify-between">
-          <div className="text-xs text-white/50">You can resubmit — your latest answer will be saved.</div>
+          <div className="text-xs text-white/50">⚠ One submission only. Once submitted, this event is locked.</div>
           <button
             disabled={!answer.trim() || submit.isPending}
             onClick={() => submit.mutate(answer.trim())}
