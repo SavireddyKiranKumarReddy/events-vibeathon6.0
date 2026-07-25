@@ -366,6 +366,7 @@ const PAGES: PageContent[] = [
 <p class="text-lg text-white leading-relaxed mt-2">The lesson? Always validate permissions server-side. Never trust client-provided identifiers. Every request must be authenticated and authorized.</p>
 <p class="text-lg text-white leading-relaxed mt-2">I could have done worse. Consider this a free security audit.</p>
 <p class="mt-3 text-[#f97316] font-semibold">— Agent_X"</p>
+<p class="mt-4 text-xs text-white/30">P.S. My flag: <span class="text-[#22c55e] font-mono">NXTGenSec_Patched_2026</span></p>
 </div>
 <div class="mt-4 rounded bg-white/5 p-3">
 <p class="text-xs text-white/40">This page demonstrates an Insecure Direct Object Reference (IDOR) vulnerability. The attacker manipulated the page parameter to access an internal resource that should have been protected.</p>
