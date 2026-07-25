@@ -99,8 +99,8 @@ function EventsPage() {
               {upcoming && <div className="mt-3 font-mono text-xl text-primary">{countdown(e.live_at ?? e.start_at)}</div>}
               {isOpen && (
                 <Link
-                  to={e.slot === 1 && track === "tech" ? "/tech1" : e.slot === 2 && track === "tech" ? "/tech2" : e.slot === 1 && track === "nontech" ? "/nontech1" : "/events/$track/$slot"}
-                  params={e.slot === 1 ? undefined : { track, slot: String(e.slot) }}
+                  to={e.slot === 1 && track === "tech" ? "/tech1" : e.slot === 2 && track === "tech" ? "/tech2" : e.slot === 1 && track === "nontech" ? "/nontech1" : e.slot === 2 && track === "nontech" ? "/nontech2" : "/events/$track/$slot"}
+                  params={(e.slot === 1 && track === "tech") || (e.slot === 2 && track === "tech") || (e.slot === 1 && track === "nontech") || (e.slot === 2 && track === "nontech") ? undefined : { track, slot: String(e.slot) }}
                   className="mt-4 inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                 >
                   Enter →
