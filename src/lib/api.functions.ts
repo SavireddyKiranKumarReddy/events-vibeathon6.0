@@ -15,11 +15,19 @@ export const getMe = createServerFn({ method: "GET" })
       .eq("user_id", userId);
     const isAdmin = !!roles?.some((r) => r.role === "admin");
     const isUser = !!roles?.some((r) => r.role === "user");
-    const { data: team } = await supabase
+    let { data: team } = await supabase
       .from("teams")
       .select("id, name, lead_name, lead_email")
       .eq("user_id", userId)
       .maybeSingle();
+    if (!team && email) {
+      const { data: byEmail } = await supabase
+        .from("teams")
+        .select("id, name, lead_name, lead_email")
+        .eq("lead_email", email.toLowerCase())
+        .maybeSingle();
+      team = byEmail ?? null;
+    }
     return {
       userId,
       email,
@@ -72,11 +80,19 @@ export const getEvent = createServerFn({ method: "GET" })
       .maybeSingle();
     const locksAt = next?.start_at ?? ev.end_at ?? null;
 
-    const { data: team } = await supabase
+    let { data: team } = await supabase
       .from("teams")
       .select("id, lead_email")
       .eq("user_id", userId)
       .maybeSingle();
+    if (!team && authEmail) {
+      const { data: byEmail } = await supabase
+        .from("teams")
+        .select("id, lead_email")
+        .eq("lead_email", authEmail)
+        .maybeSingle();
+      team = byEmail ?? null;
+    }
 
     const now = Date.now();
     const effectiveStart = ev.live_at ? new Date(ev.live_at).getTime() : new Date(ev.start_at).getTime();
@@ -122,12 +138,21 @@ export const submitAnswer = createServerFn({ method: "POST" })
     z.object({ eventId: z.string().uuid(), answer: z.string().min(1).max(2000), score: z.number().int().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: team } = await supabase
+    const { supabase, userId, claims } = context;
+    const authEmail = (claims.email as string | undefined)?.toLowerCase() ?? null;
+    let { data: team } = await supabase
       .from("teams")
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
+    if (!team && authEmail) {
+      const { data: byEmail } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("lead_email", authEmail)
+        .maybeSingle();
+      team = byEmail ?? null;
+    }
     if (!team) throw new Error("No team linked to this account");
 
     const insert: Record<string, any> = {
