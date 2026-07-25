@@ -24,7 +24,12 @@ function LB() {
   if (!data) return <div className="text-white/60">Loading…</div>;
   const d = data as any;
   const teamMap = new Map<string, { name: string; lead_name: string }>(d.teams.map((t: any) => [t.id, { name: t.name, lead_name: t.lead_name }]));
-  const events = d.events.filter((e: any) => e.track === track).sort((a: any, b: any) => a.slot - b.slot);
+  const allTrackEvents = d.events.filter((e: any) => e.track === track).sort((a: any, b: any) => a.slot - b.slot);
+  const eventSubCount = new Map<string, number>();
+  for (const s of d.submissions) {
+    eventSubCount.set(s.event_id, (eventSubCount.get(s.event_id) ?? 0) + 1);
+  }
+  const events = allTrackEvents.filter((e: any) => (eventSubCount.get(e.id) ?? 0) > 0);
 
   const isNonTech = track === "nontech";
 
