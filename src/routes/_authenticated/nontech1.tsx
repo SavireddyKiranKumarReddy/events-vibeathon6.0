@@ -23,8 +23,8 @@ const EMOJIS = [
   "🌶️", "🍄", "🌰", "🍞", "🧀", "🥜", "🧅", "🍈",
 ];
 
-const GRID_COLS = 7;
-const TOTAL_CARDS = GRID_COLS * GRID_COLS;
+const GRID_COLS = 5;
+const TOTAL_CARDS = GRID_COLS * GRID_COLS; // 25 = 12 pairs + 1 blank
 const POINTS_PER_MATCH = 10;
 const POINTS_PER_WRONG = -1;
 const MAX_TIME = 180; // 3 minutes in seconds
@@ -244,7 +244,7 @@ function NonTechEvent1() {
   const progressPercent = (matchedPairs / EMOJIS.length) * 100;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 px-4">
+    <div className="mx-auto max-w-2xl space-y-5 px-4">
       {/* Header */}
       <div>
         <div className="text-xs uppercase tracking-widest text-white/50">Non-Tech · Event 1 · Game</div>
@@ -328,14 +328,14 @@ function NonTechEvent1() {
       </GlassCard>
 
       {/* Game Grid */}
-      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-        <div className="grid grid-cols-7 gap-2">
+      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+        <div className="grid grid-cols-5 gap-3">
           {cards.map((card, i) => (
             <button
               key={card.id}
               onClick={() => handleCardClick(i)}
               disabled={card.isMatched || card.isFlipped || isChecking || gameComplete}
-              className={`flex aspect-square items-center justify-center rounded-lg border text-xl font-bold transition-all duration-200 select-none ${
+              className={`flex aspect-square items-center justify-center rounded-xl border text-3xl font-bold transition-all duration-200 select-none sm:text-4xl md:text-5xl ${
                 card.isMatched
                   ? "border-primary/30 bg-primary/10 text-primary shadow-inner"
                   : card.isFlipped
