@@ -5,11 +5,15 @@ import { getMe } from "@/lib/api.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, ShieldCheck } from "lucide-react";
 
+const HIDE_NAV_PATHS = ["/tech1", "/tech2", "/nontech1", "/nontech2"];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = useNavigate();
   const router = useRouter();
   const meFn = useServerFn(getMe);
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
+
+  const hideNav = HIDE_NAV_PATHS.includes(router.state.location.pathname);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -20,6 +24,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navLink =
     "px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-white/5 transition";
   const active = "text-white bg-white/10";
+
+  if (hideNav) {
+    return <div className="min-h-screen"><main className="mx-auto max-w-7xl px-6 py-8">{children}</main></div>;
+  }
 
   return (
     <div className="min-h-screen">
