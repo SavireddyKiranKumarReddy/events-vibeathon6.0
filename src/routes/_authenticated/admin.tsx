@@ -17,7 +17,7 @@ import {
 } from "@/lib/api.functions";
 import { GlassCard } from "@/components/AppShell";
 import { formatIST } from "@/lib/format";
-import { Trash2, Save, CheckCircle2, XCircle, RotateCcw, Pencil, X } from "lucide-react";
+import { Trash2, Save, CheckCircle2, XCircle, RotateCcw, Pencil, X, UserPlus, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -224,7 +224,9 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
   const [title, setTitle] = useState(event.title ?? "");
   const [question, setQuestion] = useState(event.question ?? "");
   const [answerKey, setAnswerKey] = useState(event.answer_key ?? "");
-  const [testEmailsText, setTestEmailsText] = useState((event.test_emails ?? []).join("\n"));
+  const [testEmails, setTestEmails] = useState<string[]>(event.test_emails ?? []);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailErr, setEmailErr] = useState<string | null>(null);
   const toLocal = (iso: string | null | undefined) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -234,6 +236,27 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
   const [startAt, setStartAt] = useState(toLocal(event.start_at));
   const [endAt, setEndAt] = useState(toLocal(event.end_at));
   const [liveAt, setLiveAt] = useState(toLocal(event.live_at));
+
+  function addTestEmail() {
+    const email = newEmail.trim().toLowerCase();
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailErr("Invalid email format");
+      return;
+    }
+    if (testEmails.includes(email)) {
+      setEmailErr("Already added");
+      return;
+    }
+    setTestEmails([...testEmails, email]);
+    setNewEmail("");
+    setEmailErr(null);
+  }
+
+  function removeTestEmail(idx: number) {
+    setTestEmails(testEmails.filter((_, i) => i !== idx));
+  }
+
   return (
     <GlassCard>
       <div className="flex items-center justify-between">
@@ -285,27 +308,68 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
           />
         </label>
       </div>
-      <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <label className="block">
-          <div className="text-xs text-white/60">Live at (overrides start_at for open check, optional)</div>
+      <label className="mt-3 block">
+        <div className="text-xs text-white/60">Live at (overrides start_at for open check, optional)</div>
+        <input
+          type="datetime-local"
+          value={liveAt}
+          onChange={(e) => setLiveAt(e.target.value)}
+          className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-primary"
+        />
+      </label>
+
+      {/* Test Users Panel */}
+      <div className="mt-4 rounded-md border border-white/10 bg-white/5 p-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-yellow-400" />
+          <span className="text-xs font-semibold text-white/80">Test Users</span>
+          {testEmails.length > 0 && (
+            <span className="ml-1 rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
+              {testEmails.length}
+            </span>
+          )}
+        </div>
+        <div className="mt-1 text-[11px] text-white/40">
+          These users can access this event before it goes live. They lock at end_at.
+        </div>
+        {testEmails.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {testEmails.map((email, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-xs text-yellow-300"
+              >
+                <Mail className="h-3 w-3" />
+                {email}
+                <button
+                  onClick={() => removeTestEmail(i)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-yellow-500/20"
+                  title="Remove"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="mt-2 flex gap-2">
           <input
-            type="datetime-local"
-            value={liveAt}
-            onChange={(e) => setLiveAt(e.target.value)}
-            className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-primary"
+            value={newEmail}
+            onChange={(e) => { setNewEmail(e.target.value); setEmailErr(null); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTestEmail(); } }}
+            placeholder="Add email and press Enter"
+            className="flex-1 rounded-md border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-mono text-white outline-none focus:border-primary"
           />
-        </label>
-        <label className="block">
-          <div className="text-xs text-white/60">Test emails (one per line — these users can access before live)</div>
-          <textarea
-            value={testEmailsText}
-            onChange={(e) => setTestEmailsText(e.target.value)}
-            rows={3}
-            placeholder="user1@example.com&#10;user2@example.com"
-            className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm font-mono text-white outline-none focus:border-primary"
-          />
-        </label>
+          <button
+            onClick={addTestEmail}
+            className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-xs font-semibold text-yellow-400 hover:bg-yellow-500/20"
+          >
+            + Add
+          </button>
+        </div>
+        {emailErr && <div className="mt-1 text-[11px] text-red-400">{emailErr}</div>}
       </div>
+
       <label className="mt-3 block">
         <div className="text-xs text-white/60">Question</div>
         <textarea
@@ -324,7 +388,7 @@ function EventEditor({ event, onSave }: { event: any; onSave: (p: any) => void }
               answer_key: answerKey,
               start_at: startAt ? new Date(startAt).toISOString() : undefined,
               end_at: endAt ? new Date(endAt).toISOString() : null,
-              test_emails: testEmailsText.split("\n").map((e: string) => e.trim()).filter(Boolean),
+              test_emails: testEmails,
               live_at: liveAt ? new Date(liveAt).toISOString() : null,
             })
           }
@@ -349,8 +413,42 @@ function EventsPanel() {
     mutationFn: (patch: any) => updFn({ data: patch }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-events"] }),
   });
+
+  const allTestUsers: { email: string; event: string; eventId: string }[] = events.flatMap((e: any) =>
+    (e.test_emails ?? []).map((email: string) => ({ email, event: `${e.track === "tech" ? "Tech" : "Non-Tech"} Ev${e.slot}`, eventId: e.id })),
+  );
+  const uniqueTestEmails: string[] = [...new Set(allTestUsers.map((t: any) => t.email))];
+
   return (
     <div className="space-y-4">
+      {/* Test Users Summary */}
+      <GlassCard>
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-yellow-400" />
+          <span className="text-sm font-semibold text-white">All Test Users</span>
+          <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
+            {uniqueTestEmails.length} users · {allTestUsers.length} assignments
+          </span>
+        </div>
+        {uniqueTestEmails.length === 0 ? (
+          <div className="mt-2 text-xs text-white/40">No test users assigned to any event.</div>
+        ) : (
+          <div className="mt-2 space-y-1">
+            {uniqueTestEmails.map((email: string) => {
+              const assigned = allTestUsers.filter((t: any) => t.email === email);
+              return (
+                <div key={email} className="flex items-center gap-2 text-xs">
+                  <Mail className="h-3 w-3 text-yellow-400" />
+                  <span className="font-mono text-white/80">{email}</span>
+                  <span className="text-white/40">→</span>
+                  <span className="text-white/50">{assigned.map((a: any) => a.event).join(", ")}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </GlassCard>
+
       {events.map((e: any) => (
         <EventEditor key={e.id} event={e} onSave={(patch) => upd.mutate({ id: e.id, ...patch })} />
       ))}
