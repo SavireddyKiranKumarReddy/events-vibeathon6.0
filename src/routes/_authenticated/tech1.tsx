@@ -134,14 +134,14 @@ function TechEvent1() {
             </div>
 
             {/* ===== HIDDEN ANSWER — find me via Inspect ===== */}
-            {/* Secret token: vibeathon_secret_42 */}
-            <div style={{ display: "none" }}>Token: vibeathon_secret_42</div>
-            <span data-token="vibeathon_secret_42" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }} />
+            {/* Secret token: Welcome to vibeathon 6.0 */}
+            <div style={{ display: "none" }}>Token: Welcome to vibeathon 6.0</div>
+            <span data-token="Welcome to vibeathon 6.0" style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }} />
             <script
               type="application/json"
               id="app-config"
               dangerouslySetInnerHTML={{
-                __html: JSON.stringify({ api_token: "vibeathon_secret_42", env: "production" }),
+                __html: JSON.stringify({ api_token: "Welcome to vibeathon 6.0", env: "production" }),
               }}
             />
             {/* ===== END HIDDEN ANSWER ===== */}

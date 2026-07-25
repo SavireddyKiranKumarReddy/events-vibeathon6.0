@@ -168,7 +168,7 @@ function NonTechEvent1() {
 
   if (!evStarted) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6 text-center">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 text-center">
         <Lock className="mx-auto h-8 w-8 text-white/40" />
         <h1 className="text-3xl font-semibold text-white">Non-Tech Event 1: Memory Match</h1>
         <p className="text-white/60">Not yet open</p>
@@ -179,7 +179,7 @@ function NonTechEvent1() {
 
   if (submission) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6 px-4">
         <GlassCard>
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="h-5 w-5" />
@@ -194,7 +194,7 @@ function NonTechEvent1() {
 
   if (!open) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6 px-4">
         <GlassCard>
           <div className="text-center text-white/60">
             <Lock className="mx-auto h-6 w-6" />
@@ -207,7 +207,7 @@ function NonTechEvent1() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-4">
       <div>
         <div className="text-xs uppercase tracking-widest text-white/50">Non-Tech · Event 1 · Game</div>
         <h1 className="mt-2 text-3xl font-semibold text-white">Memory Match</h1>
@@ -246,13 +246,13 @@ function NonTechEvent1() {
         </div>
       </GlassCard>
 
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}>
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {cards.map((card, i) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(i)}
             disabled={card.isMatched || card.isFlipped || isChecking || gameComplete}
-            className={`flex aspect-square items-center justify-center rounded-lg border text-xl font-bold transition-all duration-200 sm:text-2xl ${
+            className={`flex aspect-square items-center justify-center rounded-lg border text-base font-bold transition-all duration-200 sm:text-xl md:text-2xl ${
               card.isMatched
                 ? "border-primary/30 bg-primary/10 text-primary"
                 : card.isFlipped
