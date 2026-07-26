@@ -144,10 +144,15 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const MAINTENANCE_WHITELIST = ["/submission", "/form-admin"];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const path = router.state.location.pathname;
+  const isWhitelisted = MAINTENANCE_WHITELIST.some(p => path.startsWith(p));
 
-  if (MAINTENANCE_MODE) {
+  if (MAINTENANCE_MODE && !isWhitelisted) {
     return (
       <QueryClientProvider client={queryClient}>
         <MaintenancePage />

@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ---- Submit final project ----
 export const submitFinalProject = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (d: {
       teamLeadName: string;
       teamLeadContact: string;
@@ -15,6 +15,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       teammate3: string;
       githubUrl: string;
       deploymentUrl: string;
+      pptUrl: string;
       phasesCompleted: number;
       projectSummary: string;
       projectUniqueness: string;
@@ -30,6 +31,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
           teammate3: z.string().default(""),
           githubUrl: z.string().url(),
           deploymentUrl: z.string().url(),
+          pptUrl: z.string().url(),
           phasesCompleted: z.number().min(0).max(10),
           projectSummary: z.string().min(1).max(500),
           projectUniqueness: z.string().min(1).max(500),
@@ -47,6 +49,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       teammate_3: data.teammate3,
       github_url: data.githubUrl,
       deployment_url: data.deploymentUrl,
+      ppt_url: data.pptUrl,
       phases_completed: data.phasesCompleted,
       project_summary: data.projectSummary,
       project_uniqueness: data.projectUniqueness,
@@ -71,7 +74,7 @@ export const getFinalSubmissions = createServerFn({ method: "GET" })
 
 // ---- Update round status (admin) ----
 export const updateRoundStatus = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (d: { id: string; roundStatus: string; adminNotes?: string }) =>
       z
         .object({
