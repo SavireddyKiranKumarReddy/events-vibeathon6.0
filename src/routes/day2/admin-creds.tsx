@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Lock, Eye, EyeOff, CheckCircle2, AlertTriangle, Terminal } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, AlertTriangle, Terminal } from "lucide-react";
 
 export const Route = createFileRoute("/day2/admin-creds")({
   ssr: false,

@@ -326,7 +326,7 @@ export const day2GetLeaderboard = createServerFn({ method: "GET" })
       .eq("setting_key", "leaderboard_visible")
       .single();
     const visible = (settings?.setting_value as any)?.visible ?? true;
-    if (!visible) return { visible: false, events: [], submissions: [] };
+    if (!visible) return { visible: false, events: [], submissions: [], osintProgress: [] };
 
     const { data: events } = await supabaseAdmin
       .from("events")

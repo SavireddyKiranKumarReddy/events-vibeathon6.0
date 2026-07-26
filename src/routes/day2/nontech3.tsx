@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { day2GetEvent, day2GetSubmissions, day2SubmitAnswer } from "@/lib/api.day2";
 import { countdown, formatIST } from "@/lib/format";
-import { Link2, CheckCircle2, Lock, Sparkles, Play, AlertTriangle, ExternalLink } from "lucide-react";
+import { CheckCircle2, Lock, Sparkles, Play, AlertTriangle, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/day2/nontech3")({
   ssr: false,

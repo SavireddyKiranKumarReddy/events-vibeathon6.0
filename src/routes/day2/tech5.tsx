@@ -13,7 +13,6 @@ import {
   Lock,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
   Trophy,
   Code2,
 } from "lucide-react";

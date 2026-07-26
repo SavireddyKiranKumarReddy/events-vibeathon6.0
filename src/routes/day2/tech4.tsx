@@ -4,13 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect, useMemo } from "react";
 import {
   day2GetEvent,
-  day2GetSubmissions,
   day2GetOsintProgress,
   day2GetOsintQuestions,
   day2SubmitOsintAnswer,
   day2SkipOsintQuestion,
 } from "@/lib/api.day2";
-import { countdown, formatIST } from "@/lib/format";
+import { countdown } from "@/lib/format";
 import {
   Shield,
   CheckCircle2,
@@ -23,7 +22,8 @@ import {
   Trophy,
 } from "lucide-react";
 
-export const Route = createFileRoute("/day2/tech4" as never)({
+export const Route = createFileRoute("/day2/tech4")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "OSINT Challenge \u2014 Vibeathon" },

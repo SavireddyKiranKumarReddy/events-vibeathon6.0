@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.day2_submissions (
 
 CREATE INDEX IF NOT EXISTS idx_day2_subs_event ON public.day2_submissions(event_id);
 CREATE INDEX IF NOT EXISTS idx_day2_subs_team ON public.day2_submissions(team_name, lead_name);
+ALTER TABLE public.day2_submissions ADD CONSTRAINT uniq_day2_subs_team_event UNIQUE (team_name, lead_name, event_id);
 
 -- 2) Day 2 OSINT progress (per-question tracking for Tech 4)
 CREATE TABLE IF NOT EXISTS public.day2_osint_progress (
