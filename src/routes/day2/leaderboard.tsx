@@ -283,7 +283,7 @@ function Day2Leaderboard() {
                   osintProgress
                     .sort(
                       (a: any, b: any) =>
-                        b.total_correct - a.total_correct,
+                        (b.score ?? b.total_correct) - (a.score ?? a.total_correct),
                     )
                     .map((p: any) => (
                       <div
@@ -299,7 +299,7 @@ function Day2Leaderboard() {
                           )}
                         </div>
                         <span className="text-xs font-medium text-primary">
-                          {p.total_correct} correct
+                          {p.score ?? p.total_correct ?? 0} pts
                         </span>
                       </div>
                     ))

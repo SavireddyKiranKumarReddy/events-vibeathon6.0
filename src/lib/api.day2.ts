@@ -434,7 +434,7 @@ export const day2GetLeaderboard = createServerFn({ method: "GET" })
 
     const { data: osintProgress } = await supabaseAdmin
       .from("day2_osint_progress")
-      .select("team_name, lead_name, total_correct, total_skipped, completed");
+      .select("team_name, lead_name, total_correct, total_skipped, completed, score, hints_used");
 
     return { visible: true, events: events ?? [], submissions: subs ?? [], osintProgress: osintProgress ?? [] };
   });
