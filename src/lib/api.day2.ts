@@ -317,6 +317,59 @@ export const day2GradeDevToolsCtf = createServerFn({ method: "POST" })
     return { ok: true, score, total: questions.length };
   });
 
+// ---- Day 2: Grade Speed Quiz (server-side) ----
+export const day2GradeSpeedQuiz = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: { teamName: string; leadName: string; eventId: string; answers: string[]; timeTaken: number }) =>
+      z
+        .object({
+          teamName: z.string().min(1),
+          leadName: z.string().min(1),
+          eventId: z.string().uuid(),
+          answers: z.array(z.string()),
+          timeTaken: z.number().min(0),
+        })
+        .parse(d)
+  )
+  .handler(async ({ data }) => {
+    const { data: config } = await supabaseAdmin
+      .from("day2_config")
+      .select("config")
+      .eq("challenge_key", "speed_quiz")
+      .single();
+    if (!config) throw new Error("Speed Quiz config not found");
+
+    const cfg = config.config as any;
+    const questions: { q: string; options: string[]; answer: string }[] = cfg.questions ?? [];
+    const timeLimit = cfg.time_limit ?? 300;
+
+    let correct = 0;
+    for (let i = 0; i < questions.length; i++) {
+      const userAns = (data.answers[i] ?? "").trim().toLowerCase();
+      const correctAns = questions[i].answer.trim().toLowerCase();
+      if (userAns === correctAns) correct++;
+    }
+
+    const timeRemaining = Math.max(0, timeLimit - data.timeTaken);
+    const quizScore = correct * 10 + timeRemaining * 2;
+
+    const insert: any = {
+      team_name: data.teamName,
+      lead_name: data.leadName,
+      event_id: data.eventId,
+      answer: JSON.stringify({ answers: data.answers, correct, timeTaken: data.timeTaken, timeRemaining }),
+      auto_correct: correct === questions.length,
+      score: quizScore,
+    };
+
+    const { error } = await supabaseAdmin.from("day2_submissions").insert(insert);
+    if (error) {
+      if (error.code === "23505") throw new Error("You have already submitted for this event");
+      throw new Error("Unable to submit. Please try again.");
+    }
+    return { ok: true, correct, total: questions.length, timeRemaining, quizScore };
+  });
+
 // ---- Day 2: Leaderboard ----
 export const day2GetLeaderboard = createServerFn({ method: "GET" })
   .handler(async () => {

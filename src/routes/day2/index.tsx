@@ -63,9 +63,9 @@ const EVENTS: EventDef[] = [
     track: "nontech",
     slot: 4,
     label: "Non-Tech 4",
-    title: "Coming Soon",
+    title: "Speed Quiz: Race Against Time",
     path: "/day2/nontech4",
-    icon: <Clock className="h-5 w-5" />,
+    icon: <Zap className="h-5 w-5" />,
   },
   {
     track: "tech",
