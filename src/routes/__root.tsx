@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
-const MAINTENANCE_MODE = false;
+const MAINTENANCE_MODE = true;
 
 function MaintenancePage() {
   return (
@@ -152,18 +152,9 @@ function RootComponent() {
   const path = router.state.location.pathname;
   const isWhitelisted = MAINTENANCE_WHITELIST.some(p => path.startsWith(p));
 
-  if (MAINTENANCE_MODE && !isWhitelisted) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MaintenancePage />
-      </QueryClientProvider>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {MAINTENANCE_MODE && !isWhitelisted ? <MaintenancePage /> : <Outlet />}
     </QueryClientProvider>
   );
 }
