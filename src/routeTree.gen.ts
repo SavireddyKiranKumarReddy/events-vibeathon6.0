@@ -13,11 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as Day2RouteImport } from './routes/day2'
-import { Route as FormAdminRouteImport } from './routes/form-admin'
 import { Route as SubmissionRouteImport } from './routes/submission'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
+import { Route as AuthenticatedFormAdminRouteImport } from './routes/_authenticated/form-admin'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedNontech1RouteImport } from './routes/_authenticated/nontech1'
 import { Route as AuthenticatedNontech2RouteImport } from './routes/_authenticated/nontech2'
@@ -53,11 +53,6 @@ const Day2Route = Day2RouteImport.update({
   path: '/day2',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FormAdminRoute = FormAdminRouteImport.update({
-  id: '/form-admin',
-  path: '/form-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SubmissionRoute = SubmissionRouteImport.update({
   id: '/submission',
   path: '/submission',
@@ -76,6 +71,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedEventsRoute = AuthenticatedEventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFormAdminRoute = AuthenticatedFormAdminRouteImport.update({
+  id: '/form-admin',
+  path: '/form-admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaderboardRoute =
@@ -160,11 +160,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
-  '/form-admin': typeof FormAdminRoute
   '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
+  '/form-admin': typeof AuthenticatedFormAdminRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/nontech1': typeof AuthenticatedNontech1Route
   '/nontech2': typeof AuthenticatedNontech2Route
@@ -184,11 +184,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/form-admin': typeof FormAdminRoute
   '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
+  '/form-admin': typeof AuthenticatedFormAdminRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/nontech1': typeof AuthenticatedNontech1Route
   '/nontech2': typeof AuthenticatedNontech2Route
@@ -211,11 +211,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
-  '/form-admin': typeof FormAdminRoute
   '/submission': typeof SubmissionRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
+  '/_authenticated/form-admin': typeof AuthenticatedFormAdminRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/nontech1': typeof AuthenticatedNontech1Route
   '/_authenticated/nontech2': typeof AuthenticatedNontech2Route
@@ -238,11 +238,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/day2'
-    | '/form-admin'
     | '/submission'
     | '/admin'
     | '/dashboard'
     | '/events'
+    | '/form-admin'
     | '/leaderboard'
     | '/nontech1'
     | '/nontech2'
@@ -262,11 +262,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/form-admin'
     | '/submission'
     | '/admin'
     | '/dashboard'
     | '/events'
+    | '/form-admin'
     | '/leaderboard'
     | '/nontech1'
     | '/nontech2'
@@ -288,11 +288,11 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/day2'
-    | '/form-admin'
     | '/submission'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
+    | '/_authenticated/form-admin'
     | '/_authenticated/leaderboard'
     | '/_authenticated/nontech1'
     | '/_authenticated/nontech2'
@@ -315,7 +315,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   Day2Route: typeof Day2RouteWithChildren
-  FormAdminRoute: typeof FormAdminRoute
   SubmissionRoute: typeof SubmissionRoute
 }
 
@@ -349,13 +348,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day2RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/form-admin': {
-      id: '/form-admin'
-      path: '/form-admin'
-      fullPath: '/form-admin'
-      preLoaderRoute: typeof FormAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/submission': {
       id: '/submission'
       path: '/submission'
@@ -382,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/events'
       preLoaderRoute: typeof AuthenticatedEventsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/form-admin': {
+      id: '/_authenticated/form-admin'
+      path: '/form-admin'
+      fullPath: '/form-admin'
+      preLoaderRoute: typeof AuthenticatedFormAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leaderboard': {
@@ -507,6 +506,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
+  AuthenticatedFormAdminRoute: typeof AuthenticatedFormAdminRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNontech1Route: typeof AuthenticatedNontech1Route
   AuthenticatedNontech2Route: typeof AuthenticatedNontech2Route
@@ -518,6 +518,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
+  AuthenticatedFormAdminRoute: AuthenticatedFormAdminRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNontech1Route: AuthenticatedNontech1Route,
   AuthenticatedNontech2Route: AuthenticatedNontech2Route,
@@ -559,7 +560,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   Day2Route: Day2RouteWithChildren,
-  FormAdminRoute: FormAdminRoute,
   SubmissionRoute: SubmissionRoute,
 }
 export const routeTree = rootRouteImport

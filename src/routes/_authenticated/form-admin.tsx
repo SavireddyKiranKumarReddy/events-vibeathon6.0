@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
 import { getFinalSubmissions, updateRoundStatus } from "@/lib/api.submission";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Shield,
   Filter,
@@ -17,11 +18,19 @@ import {
   Search,
 } from "lucide-react";
 
-export const Route = createFileRoute("/form-admin")({
+const ADMIN_EMAIL = "kiransavireddy@gmail.com";
+
+export const Route = createFileRoute("/_authenticated/form-admin")({
   ssr: false,
   head: () => ({
     meta: [{ title: "Form Admin — Vibeathon 6.0" }],
   }),
+  beforeLoad: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (data.user.email !== ADMIN_EMAIL) throw redirect({ to: "/dashboard" });
+    return { user: data.user };
+  },
   component: FormAdminPage,
 });
 
@@ -88,7 +97,6 @@ function FormAdminPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="glass p-3 text-center">
             <div className="text-xs text-white/40">Total</div>
@@ -112,7 +120,6 @@ function FormAdminPage() {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="glass mb-6 flex flex-wrap items-center gap-3 p-4">
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-white/40" />
@@ -156,7 +163,6 @@ function FormAdminPage() {
           </span>
         </div>
 
-        {/* Submissions */}
         {isLoading ? (
           <div className="text-center text-white/50">Loading...</div>
         ) : filtered.length === 0 ? (
@@ -224,6 +230,14 @@ function FormAdminPage() {
                               {new Date(s.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
                             </div>
                           </div>
+                          {s.ppt_url && (
+                            <div>
+                              <div className="text-xs text-white/40">PPT</div>
+                              <a href={s.ppt_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                                View PPT <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-3">
                           <div>
@@ -253,7 +267,6 @@ function FormAdminPage() {
                         </div>
                       </div>
 
-                      {/* Admin Controls */}
                       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
                         <span className="text-xs text-white/40">Set Round:</span>
                         {ROUND_OPTIONS.map((r) => (
@@ -272,7 +285,6 @@ function FormAdminPage() {
                         ))}
                       </div>
 
-                      {/* Admin Notes */}
                       <div className="mt-3 flex items-center gap-2">
                         <input
                           type="text"
