@@ -7,7 +7,7 @@ import {
   day2GetOsintProgress,
   day2GetOsintQuestions,
   day2SubmitOsintAnswer,
-  day2SkipOsintQuestion,
+  day2RevealHint,
 } from "@/lib/api.day2";
 import { countdown } from "@/lib/format";
 import {
@@ -17,9 +17,10 @@ import {
   Lock,
   AlertTriangle,
   Eye,
-  SkipForward,
   ChevronRight,
   Trophy,
+  Lightbulb,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/day2/tech4")({
@@ -45,11 +46,14 @@ const LEVEL_COLORS: Record<string, { badge: string; ring: string }> = {
 type FlatQ = {
   index: number;
   q: string;
+  hint: string | null;
   level: number;
   levelName: string;
   levelColor: string;
   isIntel: boolean;
-  intelFile?: string;
+  intelFile?: number;
+  type: string;
+  fields: number;
 };
 
 function Tech4Page() {
@@ -58,9 +62,10 @@ function Tech4Page() {
   const leadName = raw.leadName ?? "";
 
   const [answer, setAnswer] = useState("");
+  const [multiAnswers, setMultiAnswers] = useState<Record<number, string>>({});
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
-  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [levelIntroDismissed, setLevelIntroDismissed] = useState(false);
+  const [revealedHints, setRevealedHints] = useState<Set<number>>(new Set());
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -78,7 +83,7 @@ function Tech4Page() {
   const getQuestionsFn = useServerFn(day2GetOsintQuestions);
   const getProgressFn = useServerFn(day2GetOsintProgress);
   const submitFn = useServerFn(day2SubmitOsintAnswer);
-  const skipFn = useServerFn(day2SkipOsintQuestion);
+  const hintFn = useServerFn(day2RevealHint);
 
   const { data: event } = useQuery({
     queryKey: ["day2-event-tech4"],
@@ -98,9 +103,10 @@ function Tech4Page() {
   const progress = rawProgress as any as {
     answers?: any[];
     completed?: boolean;
-    skips_remaining?: number;
+    hints_used?: number[];
     total_correct?: number;
     total_skipped?: number;
+    score?: number;
   } | null;
 
   const flatQuestions = useMemo<FlatQ[]>(() => {
@@ -112,10 +118,13 @@ function Tech4Page() {
         list.push({
           index: idx,
           q: q.q,
+          hint: q.hint,
           level: level.level,
           levelName: level.name,
           levelColor: level.color,
           isIntel: false,
+          type: q.type ?? "single",
+          fields: q.fields ?? 1,
         });
         idx++;
       }
@@ -124,11 +133,14 @@ function Tech4Page() {
       list.push({
         index: idx,
         q: intel.q,
+        hint: intel.hint,
         level: -1,
         levelName: "Intel Extraction",
         levelColor: "red",
         isIntel: true,
         intelFile: intel.file,
+        type: "single",
+        fields: 1,
       });
       idx++;
     }
@@ -148,9 +160,9 @@ function Tech4Page() {
   const isComplete =
     totalQuestions === 0 || !!progress?.completed || currentIndex >= totalQuestions;
   const currentQ = flatQuestions[currentIndex];
-  const skipsRemaining = progress?.skips_remaining ?? questions?.skipChances ?? 3;
+  const hintsUsed = (progress?.hints_used as number[]) ?? [];
   const totalCorrect = progress?.total_correct ?? 0;
-  const totalSkipped = progress?.total_skipped ?? 0;
+  const score = progress?.score ?? 0;
   const answeredCount = (progress?.answers as any[])?.length ?? 0;
 
   const isFirstInLevel =
@@ -169,11 +181,26 @@ function Tech4Page() {
     setLevelIntroDismissed(!isFirstInLevel);
   }, [currentQ, isFirstInLevel]);
 
+  useEffect(() => {
+    if (!progress?.hints_used) return;
+    setRevealedHints(new Set(progress.hints_used as number[]));
+  }, [progress?.hints_used]);
+
+  const revealHint = useMutation({
+    mutationFn: () =>
+      hintFn({ data: { teamName, leadName, questionIndex: currentIndex } }),
+    onSuccess: (res: any) => {
+      setRevealedHints(new Set(res.hintsUsed));
+      refetchProgress();
+    },
+  });
+
   const submit = useMutation({
     mutationFn: (ans: string) =>
       submitFn({ data: { teamName, leadName, questionIndex: currentIndex, answer: ans } }),
     onSuccess: (result: any) => {
       setAnswer("");
+      setMultiAnswers({});
       if (result.correct) {
         setFlash("correct");
         setTimeout(() => {
@@ -191,18 +218,17 @@ function Tech4Page() {
     },
   });
 
-  const skip = useMutation({
-    mutationFn: () =>
-      skipFn({ data: { teamName, leadName, questionIndex: currentIndex } }),
-    onSuccess: () => {
-      setShowSkipConfirm(false);
-      setAnswer("");
-      refetchProgress();
-    },
-    onError: () => {
-      setShowSkipConfirm(false);
-    },
-  });
+  function handleSubmit() {
+    if (currentQ?.type === "multi") {
+      const parts = [];
+      for (let i = 0; i < (currentQ.fields ?? 2); i++) {
+        parts.push(multiAnswers[i] ?? "");
+      }
+      submit.mutate(parts.join("|||"));
+    } else {
+      submit.mutate(answer.trim());
+    }
+  }
 
   if (!teamName || !leadName) return null;
 
@@ -245,9 +271,6 @@ function Tech4Page() {
   }
 
   if (isComplete) {
-    const skippedAnswers = ((progress?.answers as any[]) ?? []).filter(
-      (a: any) => a.skipped,
-    );
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] p-4">
         <div className="glass mx-auto w-full max-w-lg p-8 text-center">
@@ -260,33 +283,18 @@ function Tech4Page() {
               <div className="mt-1 text-2xl font-bold text-green-400">{totalCorrect}</div>
             </div>
             <div className="rounded-lg bg-white/5 p-4">
-              <div className="text-xs text-white/40">Skipped</div>
-              <div className="mt-1 text-2xl font-bold text-yellow-400">{totalSkipped}</div>
+              <div className="text-xs text-white/40">Hints Used</div>
+              <div className="mt-1 text-2xl font-bold text-yellow-400">{hintsUsed.length}</div>
             </div>
             <div className="rounded-lg bg-white/5 p-4">
-              <div className="text-xs text-white/40">Total</div>
-              <div className="mt-1 text-2xl font-bold text-white">{totalQuestions}</div>
+              <div className="text-xs text-white/40">Score</div>
+              <div className="mt-1 text-2xl font-bold text-primary">{score}</div>
             </div>
           </div>
-          {skippedAnswers.length > 0 && (
-            <div className="mt-6 text-left">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
-                Skipped Questions
-              </h3>
-              <div className="max-h-48 space-y-1 overflow-y-auto">
-                {skippedAnswers.map((a: any, i: number) => {
-                  const q = flatQuestions[a.index];
-                  const text = q?.q ?? "Unknown";
-                  return (
-                    <div key={i} className="rounded bg-white/5 px-3 py-2 text-xs text-white/50">
-                      <span className="text-white/30">Q{a.index + 1}</span>{" "}
-                      {text.length > 100 ? text.slice(0, 100) + "..." : text}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <div className="mt-4 rounded-lg bg-white/5 p-3 text-xs text-white/50">
+            {totalCorrect} correct × 100 = {totalCorrect * 100} pts
+            {hintsUsed.length > 0 && <> | {hintsUsed.length} hints × -10 = -{hintsUsed.length * 10} pts</>}
+          </div>
           <p className="mt-6 text-sm text-white/40">
             Your results have been recorded. Good luck!
           </p>
@@ -307,7 +315,7 @@ function Tech4Page() {
             className={`mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold ${style.badge}`}
           >
             {currentQ.isIntel ? <Eye className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-            {currentQ.isIntel ? "Intel Phase" : `Level ${currentQ.level + 1}`}
+            {currentQ.isIntel ? "Intel Phase" : `Level ${currentQ.level}`}
           </div>
           <h1 className="text-2xl font-bold text-white">{currentQ.levelName}</h1>
           <p className="mt-2 text-sm text-white/50">
@@ -315,6 +323,9 @@ function Tech4Page() {
               ? "Answer intel file extraction questions"
               : `${levelQCount} question${levelQCount !== 1 ? "s" : ""} in this level`}
           </p>
+          <div className="mt-3 text-xs text-white/40">
+            +100 per correct answer | Hints cost -10 pts each
+          </div>
           <button
             onClick={() => setLevelIntroDismissed(true)}
             className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:brightness-110"
@@ -325,6 +336,13 @@ function Tech4Page() {
       </div>
     );
   }
+
+  const canSubmit = currentQ?.type === "multi"
+    ? Array.from({ length: currentQ.fields ?? 2 }, (_, i) => multiAnswers[i]?.trim()).every(Boolean)
+    : !!answer.trim();
+
+  const hasHint = !!currentQ?.hint;
+  const hintRevealed = revealedHints.has(currentIndex);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -348,17 +366,14 @@ function Tech4Page() {
             />
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-4 text-xs">
               <span className="text-green-400">
                 <CheckCircle2 className="mr-1 inline h-3 w-3" />
                 {totalCorrect}
               </span>
-              <span className="text-yellow-400">
-                <SkipForward className="mr-1 inline h-3 w-3" />
-                {totalSkipped}
-              </span>
-              <span className="text-white/40">
-                {skipsRemaining} skip{skipsRemaining !== 1 ? "s" : ""} left
+              <span className="text-primary font-semibold">
+                <Zap className="mr-1 inline h-3 w-3" />
+                {score} pts
               </span>
             </div>
             {currentQ && (
@@ -389,9 +404,9 @@ function Tech4Page() {
               <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-3">
                 <div className="mb-1 flex items-center gap-2 text-xs text-white/50">
                   <Eye className="h-3.5 w-3.5" />
-                  Intel File
+                  Intel File {currentQ.intelFile}
                 </div>
-                <div className="font-mono text-sm text-primary">{currentQ.intelFile}</div>
+                <div className="font-mono text-sm text-primary">File #{currentQ.intelFile}</div>
               </div>
             )}
 
@@ -399,21 +414,65 @@ function Tech4Page() {
               {currentQ.q}
             </div>
 
+            {/* Hint Section */}
+            {hasHint && !hintRevealed && (
+              <button
+                onClick={() => revealHint.mutate()}
+                disabled={revealHint.isPending}
+                className="mt-4 inline-flex items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-400 transition hover:bg-yellow-500/20 disabled:opacity-50"
+              >
+                <Lightbulb className="h-4 w-4" />
+                {revealHint.isPending ? "Revealing..." : "Reveal Hint (-10 pts)"}
+              </button>
+            )}
+            {hasHint && hintRevealed && (
+              <div className="mt-4 rounded-md border border-yellow-500/20 bg-yellow-500/5 p-3">
+                <div className="flex items-center gap-2 text-xs text-yellow-400/70">
+                  <Lightbulb className="h-3.5 w-3.5" />
+                  Hint (-10 pts)
+                </div>
+                <p className="mt-1 text-sm text-yellow-200/80">{currentQ.hint}</p>
+              </div>
+            )}
+
+            {/* Input Section */}
             <div className="mt-6">
-              <input
-                type="text"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && answer.trim() && !submit.isPending && !flash) {
-                    submit.mutate(answer.trim());
-                  }
-                }}
-                disabled={submit.isPending || flash === "correct"}
-                className="w-full rounded-md border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:border-primary"
-                placeholder="Enter your answer..."
-                autoFocus
-              />
+              {currentQ.type === "multi" ? (
+                <div className="space-y-3">
+                  {Array.from({ length: currentQ.fields ?? 2 }, (_, i) => (
+                    <input
+                      key={i}
+                      type="text"
+                      value={multiAnswers[i] ?? ""}
+                      onChange={(e) => setMultiAnswers((prev) => ({ ...prev, [i]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && canSubmit && !submit.isPending && !flash) {
+                          handleSubmit();
+                        }
+                      }}
+                      disabled={submit.isPending || flash === "correct"}
+                      className="w-full rounded-md border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:border-primary"
+                      placeholder={`Answer ${i + 1}...`}
+                      autoFocus={i === 0}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && answer.trim() && !submit.isPending && !flash) {
+                      handleSubmit();
+                    }
+                  }}
+                  disabled={submit.isPending || flash === "correct"}
+                  className="w-full rounded-md border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:border-primary"
+                  placeholder="Enter your answer..."
+                  autoFocus
+                />
+              )}
             </div>
 
             {flash === "wrong" && (
@@ -426,23 +485,14 @@ function Tech4Page() {
             {flash === "correct" && (
               <div className="mt-3 flex items-center gap-2 text-sm text-green-400">
                 <CheckCircle2 className="h-4 w-4" />
-                Correct! Advancing...
+                Correct! +100 pts
               </div>
             )}
 
-            <div className="mt-5 flex items-center justify-between">
+            <div className="mt-5 flex items-center justify-end">
               <button
-                onClick={() => setShowSkipConfirm(true)}
-                disabled={skipsRemaining <= 0 || skip.isPending || !!flash}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                <SkipForward className="h-3.5 w-3.5" />
-                Skip ({skipsRemaining} remaining)
-              </button>
-
-              <button
-                onClick={() => submit.mutate(answer.trim())}
-                disabled={!answer.trim() || submit.isPending || flash === "correct"}
+                onClick={handleSubmit}
+                disabled={!canSubmit || submit.isPending || flash === "correct"}
                 className="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submit.isPending ? "Checking..." : "Submit"}
@@ -455,39 +505,6 @@ function Tech4Page() {
           <div className="glass p-8 text-center text-white/50">Loading question...</div>
         )}
       </div>
-
-      {showSkipConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="glass mx-auto w-full max-w-sm p-6">
-            <div className="mb-3 flex items-center gap-2 text-yellow-400">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="font-semibold">Skip Question?</span>
-            </div>
-            <p className="text-sm leading-relaxed text-white/60">
-              There might be more complex questions ahead. Do you feel this is complex and
-              you want to skip?
-            </p>
-            <div className="mt-3 text-xs text-white/40">
-              Skips remaining after this: {Math.max(0, skipsRemaining - 1)}
-            </div>
-            <div className="mt-5 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowSkipConfirm(false)}
-                className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => skip.mutate()}
-                disabled={skip.isPending}
-                className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-400 transition hover:bg-yellow-500/20 disabled:opacity-50"
-              >
-                {skip.isPending ? "Skipping..." : "Skip Question"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

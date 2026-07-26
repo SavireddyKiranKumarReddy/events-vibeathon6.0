@@ -109,7 +109,7 @@ function Day2Leaderboard() {
       });
     }
     const ts = teamMap.get(key)!;
-    ts.totalScore += prog.total_correct;
+    ts.totalScore += (prog.score ?? prog.total_correct ?? 0);
   }
 
   const ranked = [...teamMap.values()]

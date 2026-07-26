@@ -93,7 +93,7 @@ export const day2GetOsintProgress = createServerFn({ method: "GET" })
     return progress ?? null;
   });
 
-// ---- Day 2: OSINT - Get questions (without answers) ----
+// ---- Day 2: OSINT - Get questions (without answers, with hints) ----
 export const day2GetOsintQuestions = createServerFn({ method: "GET" })
   .handler(async () => {
     const { data: config } = await supabaseAdmin
@@ -108,17 +108,22 @@ export const day2GetOsintQuestions = createServerFn({ method: "GET" })
         level: l.level,
         name: l.name,
         color: l.color,
-        questions: l.questions.map((q: any) => ({ q: q.q })),
+        questions: l.questions.map((q: any) => ({
+          q: q.q,
+          hint: q.hint ?? null,
+          type: q.type ?? "single",
+          fields: q.fields ?? 1,
+        })),
       })),
       intelFiles: (cfg.intel_files ?? []).map((f: any) => ({
         file: f.file,
         q: f.q,
+        hint: f.hint ?? null,
       })),
-      skipChances: cfg.skip_chances ?? 3,
     };
   });
 
-// ---- Day 2: OSINT - Submit answer ----
+// ---- Day 2: OSINT - Submit answer (scored: +100 correct, -10 per hint) ----
 export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
   .inputValidator(
     (d: { teamName: string; leadName: string; questionIndex: number; answer: string }) =>
@@ -127,7 +132,7 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
           teamName: z.string().min(1),
           leadName: z.string().min(1),
           questionIndex: z.number().min(0),
-          answer: z.string().min(1),
+          answer: z.string(),
         })
         .parse(d)
   )
@@ -140,10 +145,10 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
     if (!config) throw new Error("OSINT config not found");
 
     const cfg = config.config as any;
-    const allQuestions: { q: string; answer: string }[] = [];
+    const allQuestions: { q: string; answer: string; type?: string; answers?: string[] }[] = [];
     for (const level of cfg.levels ?? []) {
       for (const question of level.questions ?? []) {
-        allQuestions.push({ q: question.q, answer: question.answer });
+        allQuestions.push({ q: question.q, answer: question.answer, type: question.type, answers: question.answers });
       }
     }
     for (const intel of cfg.intel_files ?? []) {
@@ -152,8 +157,14 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
 
     if (data.questionIndex >= allQuestions.length) throw new Error("Invalid question index");
 
-    const correctAnswer = allQuestions[data.questionIndex].answer;
-    const isCorrect = data.answer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+    const qDef = allQuestions[data.questionIndex];
+    let isCorrect = false;
+    if (qDef.type === "multi" && qDef.answers) {
+      const userParts = data.answer.split("|||").map((a: string) => a.trim().toLowerCase());
+      isCorrect = qDef.answers.every((a: string, i: number) => (userParts[i] ?? "") === a.trim().toLowerCase());
+    } else {
+      isCorrect = data.answer.trim().toLowerCase() === qDef.answer.trim().toLowerCase();
+    }
 
     const { data: existing } = await supabaseAdmin
       .from("day2_osint_progress")
@@ -163,30 +174,29 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
       .single();
 
     const totalQuestions = allQuestions.length;
+    const prevAnswers = (existing?.answers as any[]) ?? [];
+    const hintsUsed = (existing?.hints_used as number[]) ?? [];
+    const newAnswer = { index: data.questionIndex, answer: data.answer, correct: isCorrect };
+    const answers = [...prevAnswers, newAnswer];
+    const totalCorrect = answers.filter((a: any) => a.correct).length;
+    const score = totalCorrect * 100 - hintsUsed.length * 10;
+    const nextQ = isCorrect ? Math.max((existing?.current_question ?? 0), data.questionIndex + 1) : (existing?.current_question ?? data.questionIndex);
+    const completed = nextQ >= totalQuestions;
 
     if (!existing) {
-      const answers = [{ index: data.questionIndex, answer: data.answer, correct: isCorrect }];
-      const nextQ = isCorrect ? data.questionIndex + 1 : data.questionIndex;
-      const completed = nextQ >= totalQuestions;
       await supabaseAdmin.from("day2_osint_progress").insert({
         team_name: data.teamName,
         lead_name: data.leadName,
         current_question: nextQ,
         total_correct: isCorrect ? 1 : 0,
         total_skipped: 0,
-        skips_remaining: cfg.skip_chances ?? 3,
+        skips_remaining: 0,
+        hints_used: [],
         answers,
         completed,
       });
-      return { correct: isCorrect, nextQuestion: nextQ, completed, skipsRemaining: cfg.skip_chances ?? 3, totalCorrect: isCorrect ? 1 : 0 };
+      return { correct: isCorrect, nextQuestion: nextQ, completed, totalCorrect: isCorrect ? 1 : 0, score: isCorrect ? 100 : 0, hintsUsed: [] };
     }
-
-    const prevAnswers = (existing.answers as any[]) ?? [];
-    const newAnswer = { index: data.questionIndex, answer: data.answer, correct: isCorrect };
-    const answers = [...prevAnswers, newAnswer];
-    const totalCorrect = answers.filter((a: any) => a.correct).length;
-    const nextQ = isCorrect ? Math.max(existing.current_question, data.questionIndex + 1) : existing.current_question;
-    const completed = nextQ >= totalQuestions;
 
     await supabaseAdmin
       .from("day2_osint_progress")
@@ -194,22 +204,17 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
         current_question: nextQ,
         total_correct: totalCorrect,
         answers,
+        score,
         completed,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
 
-    return {
-      correct: isCorrect,
-      nextQuestion: nextQ,
-      completed,
-      skipsRemaining: existing.skips_remaining,
-      totalCorrect,
-    };
+    return { correct: isCorrect, nextQuestion: nextQ, completed, totalCorrect, score, hintsUsed };
   });
 
-// ---- Day 2: OSINT - Skip question ----
-export const day2SkipOsintQuestion = createServerFn({ method: "POST" })
+// ---- Day 2: OSINT - Reveal hint (costs -10 pts) ----
+export const day2RevealHint = createServerFn({ method: "POST" })
   .inputValidator(
     (d: { teamName: string; leadName: string; questionIndex: number }) =>
       z
@@ -228,24 +233,36 @@ export const day2SkipOsintQuestion = createServerFn({ method: "POST" })
       .eq("lead_name", data.leadName)
       .single();
 
-    if (!existing) throw new Error("No OSINT session found. Answer at least one question first.");
-    if (existing.completed) throw new Error("Challenge already completed.");
-    if (existing.skips_remaining <= 0) throw new Error("No skips remaining.");
+    const hintsUsed = (existing?.hints_used as number[]) ?? [];
+    if (hintsUsed.includes(data.questionIndex)) return { ok: true, hintsUsed };
 
-    const prevAnswers = (existing.answers as any[]) ?? [];
-    const answers = [...prevAnswers, { index: data.questionIndex, answer: "__SKIPPED__", correct: false, skipped: true }];
+    const newHints = [...hintsUsed, data.questionIndex];
+
+    if (!existing) {
+      await supabaseAdmin.from("day2_osint_progress").insert({
+        team_name: data.teamName,
+        lead_name: data.leadName,
+        current_question: 0,
+        total_correct: 0,
+        total_skipped: 0,
+        skips_remaining: 0,
+        hints_used: newHints,
+        answers: [],
+        completed: false,
+      });
+      return { ok: true, hintsUsed: newHints };
+    }
+
+    const answers = (existing.answers as any[]) ?? [];
+    const totalCorrect = answers.filter((a: any) => a.correct).length;
+    const score = totalCorrect * 100 - newHints.length * 10;
 
     await supabaseAdmin
       .from("day2_osint_progress")
-      .update({
-        total_skipped: existing.total_skipped + 1,
-        skips_remaining: existing.skips_remaining - 1,
-        answers,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ hints_used: newHints, score, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
 
-    return { ok: true, skipsRemaining: existing.skips_remaining - 1 };
+    return { ok: true, hintsUsed: newHints, score };
   });
 
 // ---- Day 2: Get challenge config (strips answers) ----

@@ -796,7 +796,8 @@ function Day2AdminPanel() {
                   <th className="pb-2">Team</th>
                   <th className="pb-2">Lead</th>
                   <th className="pb-2">Correct</th>
-                  <th className="pb-2">Skipped</th>
+                  <th className="pb-2">Hints</th>
+                  <th className="pb-2">Score</th>
                   <th className="pb-2">Status</th>
                 </tr>
               </thead>
@@ -806,7 +807,8 @@ function Day2AdminPanel() {
                     <td className="py-2 text-white">{p.team_name}</td>
                     <td className="py-2 text-white/70">{p.lead_name}</td>
                     <td className="py-2 font-mono text-primary">{p.total_correct}</td>
-                    <td className="py-2 font-mono text-yellow-400">{p.total_skipped}</td>
+                    <td className="py-2 font-mono text-yellow-400">{(p.hints_used ?? []).length}</td>
+                    <td className="py-2 font-mono text-green-400">{p.score ?? 0}</td>
                     <td className="py-2">
                       {p.completed ? (
                         <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Done</span>
