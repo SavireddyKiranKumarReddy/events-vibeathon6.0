@@ -97,15 +97,34 @@ function EventsPage() {
                 </div>
               )}
               {upcoming && <div className="mt-3 font-mono text-xl text-primary">{countdown(e.live_at ?? e.start_at)}</div>}
-              {isOpen && (
-                <Link
-                  to={e.slot === 1 && track === "tech" ? "/tech1" : e.slot === 2 && track === "tech" ? "/tech2" : e.slot === 1 && track === "nontech" ? "/nontech1" : e.slot === 2 && track === "nontech" ? "/nontech2" : "/events/$track/$slot"}
-                  params={(e.slot === 1 && track === "tech") || (e.slot === 2 && track === "tech") || (e.slot === 1 && track === "nontech") || (e.slot === 2 && track === "nontech") ? undefined : { track, slot: String(e.slot) }}
-                  className="mt-4 inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                >
-                  Enter →
-                </Link>
-              )}
+              {isOpen && (() => {
+                const day2Map: Record<string, string> = {
+                  "tech-3": "/day2/tech3",
+                  "tech-4": "/day2/tech4",
+                  "tech-5": "/day2/tech5",
+                  "nontech-3": "/day2/nontech3",
+                  "nontech-4": "/day2/nontech4",
+                  "nontech-5": "/day2/nontech5",
+                };
+                const day1Map: Record<string, string> = {
+                  "tech-1": "/tech1",
+                  "tech-2": "/tech2",
+                  "nontech-1": "/nontech1",
+                  "nontech-2": "/nontech2",
+                };
+                const key = `${track}-${e.slot}`;
+                const href = day2Map[key] ?? day1Map[key] ?? `/events/$track/$slot`;
+                const needsParams = !day2Map[key] && !day1Map[key];
+                return (
+                  <Link
+                    to={href as any}
+                    params={needsParams ? { track, slot: String(e.slot) } : undefined}
+                    className="mt-4 inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                  >
+                    Enter →
+                  </Link>
+                );
+              })()}
               {closed && (
                 <div className="mt-3 inline-flex items-center gap-1 text-xs text-white/50">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Window closed
