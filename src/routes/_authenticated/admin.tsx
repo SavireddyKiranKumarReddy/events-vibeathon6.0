@@ -15,6 +15,11 @@ import {
   adminOverrideSubmission,
   adminBulkImportTeams,
 } from "@/lib/api.functions";
+import {
+  day2AdminListSubmissions,
+  day2AdminOverrideSubmission,
+  day2AdminUpdateSetting,
+} from "@/lib/api.day2";
 import { GlassCard } from "@/components/AppShell";
 import { formatIST } from "@/lib/format";
 import { Trash2, Save, CheckCircle2, XCircle, RotateCcw, Pencil, X, UserPlus, Mail } from "lucide-react";
@@ -735,8 +740,183 @@ function BulkImportPanel() {
   );
 }
 
+function Day2AdminPanel() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(day2AdminListSubmissions);
+  const overrideFn = useServerFn(day2AdminOverrideSubmission);
+  const updateSettingFn = useServerFn(day2AdminUpdateSetting);
+  const { data, isLoading } = useQuery({ queryKey: ["day2-admin-subs"], queryFn: () => listFn(), refetchInterval: 5000 });
+  const setOverride = useMutation({
+    mutationFn: (p: { id: string; override: boolean | null; score?: number }) => overrideFn({ data: p }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["day2-admin-subs"] }),
+  });
+  const toggleLeaderboard = useMutation({
+    mutationFn: (visible: boolean) => updateSettingFn({ data: { settingKey: "leaderboard_visible", value: { visible } } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["day2-admin-subs"] }),
+  });
+
+  if (isLoading) return <div className="text-white/60">Loading Day 2 data…</div>;
+  if (!data) return <div className="text-white/60">No data.</div>;
+
+  const { submissions, events, osintProgress } = data as any;
+  const lbVisible = true;
+
+  return (
+    <div className="space-y-4">
+      <GlassCard>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-white">Day 2 Submissions ({submissions.length})</h3>
+            <p className="text-xs text-white/40 mt-0.5">Override scores and manage Day 2 results.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-white/50">Leaderboard:</div>
+            <button
+              onClick={() => toggleLeaderboard.mutate(!lbVisible)}
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition ${
+                lbVisible
+                  ? "border-primary bg-primary/20 text-white"
+                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${lbVisible ? "bg-primary" : "bg-white/30"}`} />
+              {lbVisible ? "Visible" : "Hidden"}
+            </button>
+          </div>
+        </div>
+      </GlassCard>
+
+      {osintProgress.length > 0 && (
+        <GlassCard>
+          <h3 className="text-sm font-semibold text-white">OSINT Progress ({osintProgress.length} teams)</h3>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase tracking-widest text-white/40">
+                <tr>
+                  <th className="pb-2">Team</th>
+                  <th className="pb-2">Lead</th>
+                  <th className="pb-2">Correct</th>
+                  <th className="pb-2">Skipped</th>
+                  <th className="pb-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {osintProgress.map((p: any) => (
+                  <tr key={p.id}>
+                    <td className="py-2 text-white">{p.team_name}</td>
+                    <td className="py-2 text-white/70">{p.lead_name}</td>
+                    <td className="py-2 font-mono text-primary">{p.total_correct}</td>
+                    <td className="py-2 font-mono text-yellow-400">{p.total_skipped}</td>
+                    <td className="py-2">
+                      {p.completed ? (
+                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Done</span>
+                      ) : (
+                        <span className="text-white/40">In progress</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </GlassCard>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <GlassCard className="lg:col-span-1">
+          <h3 className="text-sm font-semibold text-white">Events</h3>
+          <div className="mt-3 space-y-1">
+            {events.map((e: any) => (
+              <div key={e.id} className="rounded-md px-3 py-2 text-left text-sm text-white/70">
+                <div className="text-xs uppercase tracking-widest text-white/40">
+                  {e.track === "tech" ? "Tech" : "Non-Tech"} · Slot {e.slot}
+                </div>
+                {e.title}
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+        <div className="lg:col-span-3">
+          <GlassCard>
+            <h3 className="text-sm font-semibold text-white">Submissions ({submissions.length})</h3>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-xs uppercase tracking-widest text-white/40">
+                  <tr>
+                    <th className="pb-2">#</th>
+                    <th className="pb-2">Team</th>
+                    <th className="pb-2">Event</th>
+                    <th className="pb-2">Answer</th>
+                    <th className="pb-2">Submitted</th>
+                    <th className="pb-2">Score</th>
+                    <th className="pb-2 text-right">Override</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {submissions.map((s: any, i: number) => {
+                    const evt = events.find((e: any) => e.id === s.event_id);
+                    const effectiveScore = s.admin_override != null ? (s.admin_override ? (s.score ?? 1) : 0) : (s.score ?? (s.auto_correct ? 1 : 0));
+                    return (
+                      <tr key={s.id}>
+                        <td className="py-3 font-mono text-white/50">{i + 1}</td>
+                        <td className="py-3 text-white">{s.team_name} <span className="text-xs text-white/40">· {s.lead_name}</span></td>
+                        <td className="py-3 text-xs text-white/50">
+                          {evt ? `${evt.track === "tech" ? "Tech" : "NT"} Ev${evt.slot}` : "—"}
+                        </td>
+                        <td className="py-3 text-white/80 max-w-[200px]">
+                          {s.file_url ? (
+                            <a href={s.file_url} target="_blank" rel="noopener noreferrer">
+                              <img src={s.file_url} alt="Submission" className="h-16 w-16 rounded border border-white/10 object-cover hover:border-primary transition" />
+                            </a>
+                          ) : (
+                            <span className="truncate block font-mono text-xs">{s.answer}</span>
+                          )}
+                        </td>
+                        <td className="py-3 font-mono text-xs text-white/60">{formatIST(s.submitted_at)}</td>
+                        <td className="py-3 font-mono text-xs text-white/60">
+                          {effectiveScore}
+                        </td>
+                        <td className="py-3 text-right">
+                          <div className="inline-flex gap-1">
+                            <button
+                              onClick={() => setOverride.mutate({ id: s.id, override: true, score: 1 })}
+                              className="rounded border border-white/10 p-1.5 text-primary hover:bg-white/5"
+                              title="Mark correct"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setOverride.mutate({ id: s.id, override: false, score: 0 })}
+                              className="rounded border border-white/10 p-1.5 text-white/60 hover:bg-white/5"
+                              title="Mark incorrect"
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setOverride.mutate({ id: s.id, override: null })}
+                              className="rounded border border-white/10 p-1.5 text-white/60 hover:bg-white/5"
+                              title="Clear override"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {submissions.length === 0 && <div className="py-3 text-sm text-white/50">No Day 2 submissions yet.</div>}
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Admin() {
-  const [tab, setTab] = useState<"teams" | "events" | "submissions" | "import">("teams");
+  const [tab, setTab] = useState<"teams" | "events" | "submissions" | "import" | "day2">("teams");
   return (
     <div className="space-y-6">
       <div>
@@ -744,7 +924,7 @@ function Admin() {
         <p className="mt-1 text-sm text-white/60">Manage teams, events, and grading.</p>
       </div>
       <div className="glass inline-flex p-1">
-        {(["teams", "import", "events", "submissions"] as const).map((t) => (
+        {(["teams", "import", "events", "submissions", "day2"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -752,7 +932,7 @@ function Admin() {
               tab === t ? "bg-primary font-semibold text-primary-foreground" : "text-white/70 hover:text-white"
             }`}
           >
-            {t === "import" ? "Bulk Import" : t[0].toUpperCase() + t.slice(1)}
+            {t === "import" ? "Bulk Import" : t === "day2" ? "Day 2" : t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -760,6 +940,7 @@ function Admin() {
       {tab === "import" && <BulkImportPanel />}
       {tab === "events" && <EventsPanel />}
       {tab === "submissions" && <SubmissionsPanel />}
+      {tab === "day2" && <Day2AdminPanel />}
     </div>
   );
 }

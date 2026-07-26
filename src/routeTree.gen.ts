@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as Day2RouteImport } from './routes/day2'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
@@ -20,6 +21,9 @@ import { Route as AuthenticatedNontech1RouteImport } from './routes/_authenticat
 import { Route as AuthenticatedNontech2RouteImport } from './routes/_authenticated/nontech2'
 import { Route as AuthenticatedTech1RouteImport } from './routes/_authenticated/tech1'
 import { Route as AuthenticatedTech2RouteImport } from './routes/_authenticated/tech2'
+import { Route as Day2IndexRouteImport } from './routes/day2/index'
+import { Route as Day2Nontech3RouteImport } from './routes/day2/nontech3'
+import { Route as Day2Tech3RouteImport } from './routes/day2/tech3'
 import { Route as AuthenticatedEventsTrackSlotRouteImport } from './routes/_authenticated/events.$track.$slot'
 
 const IndexRoute = IndexRouteImport.update({
@@ -34,6 +38,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Day2Route = Day2RouteImport.update({
+  id: '/day2',
+  path: '/day2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -77,6 +86,21 @@ const AuthenticatedTech2Route = AuthenticatedTech2RouteImport.update({
   path: '/tech2',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const Day2IndexRoute = Day2IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => Day2Route,
+} as any)
+const Day2Nontech3Route = Day2Nontech3RouteImport.update({
+  id: '/nontech3',
+  path: '/nontech3',
+  getParentRoute: () => Day2Route,
+} as any)
+const Day2Tech3Route = Day2Tech3RouteImport.update({
+  id: '/tech3',
+  path: '/tech3',
+  getParentRoute: () => Day2Route,
+} as any)
 const AuthenticatedEventsTrackSlotRoute =
   AuthenticatedEventsTrackSlotRouteImport.update({
     id: '/$track/$slot',
@@ -87,6 +111,7 @@ const AuthenticatedEventsTrackSlotRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/day2': typeof Day2RouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -95,6 +120,9 @@ export interface FileRoutesByFullPath {
   '/nontech2': typeof AuthenticatedNontech2Route
   '/tech1': typeof AuthenticatedTech1Route
   '/tech2': typeof AuthenticatedTech2Route
+  '/day2/nontech3': typeof Day2Nontech3Route
+  '/day2/tech3': typeof Day2Tech3Route
+  '/day2/': typeof Day2IndexRoute
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesByTo {
@@ -108,6 +136,9 @@ export interface FileRoutesByTo {
   '/nontech2': typeof AuthenticatedNontech2Route
   '/tech1': typeof AuthenticatedTech1Route
   '/tech2': typeof AuthenticatedTech2Route
+  '/day2/nontech3': typeof Day2Nontech3Route
+  '/day2/tech3': typeof Day2Tech3Route
+  '/day2': typeof Day2IndexRoute
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesById {
@@ -115,6 +146,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/day2': typeof Day2RouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
@@ -123,6 +155,9 @@ export interface FileRoutesById {
   '/_authenticated/nontech2': typeof AuthenticatedNontech2Route
   '/_authenticated/tech1': typeof AuthenticatedTech1Route
   '/_authenticated/tech2': typeof AuthenticatedTech2Route
+  '/day2/nontech3': typeof Day2Nontech3Route
+  '/day2/tech3': typeof Day2Tech3Route
+  '/day2/': typeof Day2IndexRoute
   '/_authenticated/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +165,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/day2'
     | '/admin'
     | '/dashboard'
     | '/events'
@@ -138,6 +174,9 @@ export interface FileRouteTypes {
     | '/nontech2'
     | '/tech1'
     | '/tech2'
+    | '/day2/nontech3'
+    | '/day2/tech3'
+    | '/day2/'
     | '/events/$track/$slot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,12 +190,16 @@ export interface FileRouteTypes {
     | '/nontech2'
     | '/tech1'
     | '/tech2'
+    | '/day2/nontech3'
+    | '/day2/tech3'
+    | '/day2'
     | '/events/$track/$slot'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/day2'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
@@ -165,6 +208,9 @@ export interface FileRouteTypes {
     | '/_authenticated/nontech2'
     | '/_authenticated/tech1'
     | '/_authenticated/tech2'
+    | '/day2/nontech3'
+    | '/day2/tech3'
+    | '/day2/'
     | '/_authenticated/events/$track/$slot'
   fileRoutesById: FileRoutesById
 }
@@ -172,6 +218,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  Day2Route: typeof Day2RouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -195,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/day2': {
+      id: '/day2'
+      path: '/day2'
+      fullPath: '/day2'
+      preLoaderRoute: typeof Day2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -253,6 +307,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTech2RouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/day2/': {
+      id: '/day2/'
+      path: '/'
+      fullPath: '/day2/'
+      preLoaderRoute: typeof Day2IndexRouteImport
+      parentRoute: typeof Day2Route
+    }
+    '/day2/nontech3': {
+      id: '/day2/nontech3'
+      path: '/nontech3'
+      fullPath: '/day2/nontech3'
+      preLoaderRoute: typeof Day2Nontech3RouteImport
+      parentRoute: typeof Day2Route
+    }
+    '/day2/tech3': {
+      id: '/day2/tech3'
+      path: '/tech3'
+      fullPath: '/day2/tech3'
+      preLoaderRoute: typeof Day2Tech3RouteImport
+      parentRoute: typeof Day2Route
+    }
     '/_authenticated/events/$track/$slot': {
       id: '/_authenticated/events/$track/$slot'
       path: '/$track/$slot'
@@ -299,21 +374,26 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface Day2RouteChildren {
+  Day2Nontech3Route: typeof Day2Nontech3Route
+  Day2Tech3Route: typeof Day2Tech3Route
+  Day2IndexRoute: typeof Day2IndexRoute
+}
+
+const Day2RouteChildren: Day2RouteChildren = {
+  Day2Nontech3Route: Day2Nontech3Route,
+  Day2Tech3Route: Day2Tech3Route,
+  Day2IndexRoute: Day2IndexRoute,
+}
+
+const Day2RouteWithChildren = Day2Route._addFileChildren(Day2RouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  Day2Route: Day2RouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
