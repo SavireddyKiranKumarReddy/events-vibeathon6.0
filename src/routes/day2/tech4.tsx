@@ -136,9 +136,13 @@ function Tech4Page() {
 
   const currentIndex = useMemo(() => {
     if (!progress?.answers) return 0;
-    const done = new Set((progress.answers as any[]).map((a: any) => a.index));
+    const correctSet = new Set(
+      (progress.answers as any[])
+        .filter((a: any) => a.correct)
+        .map((a: any) => a.index)
+    );
     for (let i = 0; i < flatQuestions.length; i++) {
-      if (!done.has(i)) return i;
+      if (!correctSet.has(i)) return i;
     }
     return flatQuestions.length;
   }, [progress, flatQuestions]);
@@ -191,7 +195,10 @@ function Tech4Page() {
         }, 1500);
       } else {
         setFlash("wrong");
-        setTimeout(() => setFlash(null), 1500);
+        setTimeout(() => {
+          setFlash(null);
+          refetchProgress();
+        }, 1500);
       }
     },
     onError: () => {
