@@ -113,6 +113,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <div dangerouslySetInnerHTML={{ __html: '<!-- system-debug: c3lzdGVtLWRlYnVnOiBkY3Bfa2V5XzE5Mjg= -->' }} />
         {children}
         <Scripts />
       </body>

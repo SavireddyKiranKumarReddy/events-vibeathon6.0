@@ -30,7 +30,6 @@ function EventsPage() {
 
   return (
     <div className="space-y-6">
-      <div dangerouslySetInnerHTML={{ __html: '<!-- system-debug: c3lzdGVtLWRlYnVnOiBkY3Bfa2V5XzE5Mjg= -->' }} />
       <div>
         <h1 className="text-3xl font-semibold text-white">Events</h1>
         <p className="mt-1 text-sm text-white/60">
