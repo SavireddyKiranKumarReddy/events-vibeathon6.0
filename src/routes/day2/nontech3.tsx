@@ -219,10 +219,32 @@ function NonTechEvent3() {
 
           <div className="rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5 p-4">
             <p className="text-xs uppercase tracking-widest text-[#22c55e] mb-2">How to Win</p>
-            <p>
-              The participant whose reel receives the <strong className="text-white">highest genuine engagement</strong> (likes, reach, and overall impact)
-              will be declared the winner.
+            <p className="mb-3">
+              The participant whose reel receives the <strong className="text-white">highest genuine engagement</strong> will be declared the winner.
             </p>
+            <p className="text-xs uppercase tracking-widest text-white/50 mb-2">Judging Criteria</p>
+            <ul className="space-y-1.5 text-white/70">
+              <li>• <strong className="text-white">Likes / Reactions</strong> — Total genuine likes on your reel</li>
+              <li>• <strong className="text-white">Views / Reach</strong> — How many people saw your content</li>
+              <li>• <strong className="text-white">Comments</strong> — Real engagement and conversation</li>
+              <li>• <strong className="text-white">Shares / Saves</strong> — How shareable your content is</li>
+              <li>• <strong className="text-white">Content Quality</strong> — Creativity, editing, message clarity</li>
+            </ul>
+            <p className="mt-3 text-xs text-white/50">
+              📌 <strong>Deadline:</strong> Submit your URL before the event window closes.
+              Engagement will be measured at the time of judging.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-[#ef4444]/20 bg-[#ef4444]/5 p-4">
+            <p className="text-xs uppercase tracking-widest text-[#ef4444] mb-2">Disqualification</p>
+            <ul className="space-y-1 text-white/70">
+              <li>• Fake likes, bot engagement, or purchased interactions</li>
+              <li>• Content that is not original or plagiarized</li>
+              <li>• Offensive, misleading, or inappropriate content</li>
+              <li>• Not mentioning or tagging @NxtGenSec</li>
+              <li>• Video shorter than 30 seconds</li>
+            </ul>
           </div>
 
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
