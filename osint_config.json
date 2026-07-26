@@ -1,0 +1,58 @@
+{
+  "config": {
+    "skip_chances": 0,
+    "levels": [
+      {
+        "name": "Company Intelligence",
+        "color": "green",
+        "level": 1,
+        "questions": [
+          {"q": "What is the full legal name of NxtGenSec?", "hint": "Check the footer or About page of nxtgensec.org", "answer": "NXTGENSEC PRIVATE LIMITED"},
+          {"q": "What is the Startup India Recognition ID of NxtGenSec?", "hint": "Look for government registration details on the website", "answer": "DIPP273878"},
+          {"q": "What is the official tagline of NxtGenSec?", "hint": "Find it on the homepage hero section", "answer": "Securing Digital Assets"},
+          {"q": "What is the official website URL of NxtGenSec?", "hint": "Check the browser address bar or any social media bio", "answer": "nxtgensec.org"}
+        ]
+      },
+      {
+        "name": "Product Intelligence",
+        "color": "yellow",
+        "level": 2,
+        "questions": [
+          {"q": "NxtGenSec has its own AI product. What is its name?", "hint": "Visit the Products or Tools section of the website", "answer": "AwMate"},
+          {"q": "What is the latest version of AwMate?", "hint": "Check the AwMate product page or release notes", "answer": "1.17.24"},
+          {"q": "What is the SHA-256 hash value of awmate-desktop-win-x64.exe? (Enter the full hash, with or without sha256: prefix)", "hint": "Look for download or release section on the AwMate page", "answer": "fc2802b848569f9eec7f2775c3a10ab7c1ff343f2a747aad78c449c2229dd37f", "normalize": "strip_prefix"}
+        ]
+      },
+      {
+        "name": "Community Investigation",
+        "color": "orange",
+        "level": 3,
+        "questions": [
+          {"q": "During Vibeathon 5.0, best performers received access to a specific AI/Vibe Coding tool. What was the tool?", "hint": "Check NxtGenSec social media posts about past Vibeathon winners", "answer": "Emergent"},
+          {"q": "Which college had the highest participation in Vibeathon 6.0 registrations?", "hint": "Look at participation stats or announcements on social media", "answer": "SNS College of Technology"}
+        ]
+      },
+      {
+        "name": "Social Media Investigation",
+        "color": "blue",
+        "level": 4,
+        "questions": [
+          {"q": "On what date was the first official Instagram post by NxtGenSec published? (Format: DD Month YYYY)", "hint": "Scroll to the very first post on @nxtgensec Instagram", "answer": "11 August 2025"},
+          {"q": "NxtGenSec has a main Instagram page. Along with it, there are 2 more related pages. Name both below.", "hint": "Check the tagged pages or bio links on the main Instagram", "type": "multi", "fields": 2, "answers": ["dev.nxtgensec.org", "cyber.nxtgensec.org"]}
+        ]
+      },
+      {
+        "name": "Website Investigation",
+        "color": "purple",
+        "level": 5,
+        "questions": [
+          {"q": "NxtGenSec developers have developed and deployed a school website. Find its URL.", "hint": "Look for school-related links on nxtgensec.org or social media", "answer": "vidvaschooltpt.vercel.app"},
+          {"q": "There is a small mistake on the school website. One social media icon points to a platform that does not exist for the school. Name that platform.", "hint": "Check the footer social icons on the school website", "answer": "Linkedin"},
+          {"q": "Find the highest student rank mentioned in 2025 (out of 600).", "hint": "Check the school website achievements section", "answer": "595"},
+          {"q": "NxtGenSec interns developed the Vibeathon 6.0 events platform. Find its URL.", "hint": "It is hosted on a subdomain of nxtgensec.org", "answer": "events.vibeathon.nxtgensec.org"},
+          {"q": "What is the parent domain that hosts all NxtGenSec web properties?", "hint": "Check any NxtGenSec website URL", "answer": "nxtgensec.org"}
+        ]
+      }
+    ]
+  }
+}

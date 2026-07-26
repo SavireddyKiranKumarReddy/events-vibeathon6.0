@@ -21,6 +21,8 @@ import {
   Trophy,
   Lightbulb,
   Zap,
+  ShieldCheck,
+  Flag,
 } from "lucide-react";
 
 export const Route = createFileRoute("/day2/tech4")({
@@ -50,8 +52,6 @@ type FlatQ = {
   level: number;
   levelName: string;
   levelColor: string;
-  isIntel: boolean;
-  intelFile?: number;
   type: string;
   fields: number;
 };
@@ -66,6 +66,9 @@ function Tech4Page() {
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const [levelIntroDismissed, setLevelIntroDismissed] = useState(false);
   const [revealedHints, setRevealedHints] = useState<Set<number>>(new Set());
+  const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => {
+    return localStorage.getItem("osint_guidelines_accepted") === "1";
+  });
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -122,27 +125,11 @@ function Tech4Page() {
           level: level.level,
           levelName: level.name,
           levelColor: level.color,
-          isIntel: false,
           type: q.type ?? "single",
           fields: q.fields ?? 1,
         });
         idx++;
       }
-    }
-    for (const intel of questions.intelFiles) {
-      list.push({
-        index: idx,
-        q: intel.q,
-        hint: intel.hint,
-        level: -1,
-        levelName: "Intel Extraction",
-        levelColor: "red",
-        isIntel: true,
-        intelFile: intel.file,
-        type: "single",
-        fields: 1,
-      });
-      idx++;
     }
     return list;
   }, [questions]);
@@ -167,17 +154,12 @@ function Tech4Page() {
 
   const isFirstInLevel =
     !!currentQ &&
-    !currentQ.isIntel &&
     (currentIndex === 0 || flatQuestions[currentIndex - 1]?.level !== currentQ.level);
 
   const showLevelIntro = !levelIntroDismissed && isFirstInLevel && !isComplete;
 
   useEffect(() => {
     if (!currentQ) return;
-    if (currentQ.isIntel) {
-      setLevelIntroDismissed(true);
-      return;
-    }
     setLevelIntroDismissed(!isFirstInLevel);
   }, [currentQ, isFirstInLevel]);
 
@@ -270,6 +252,86 @@ function Tech4Page() {
     );
   }
 
+  if (!guidelinesAccepted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] p-4">
+        <div className="glass mx-auto w-full max-w-xl p-8">
+          <div className="mb-6 text-center">
+            <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-primary" />
+            <h1 className="text-2xl font-bold text-white">NxtGenSec OSINT Challenge</h1>
+            <p className="mt-1 text-sm text-white/50">Before you begin, please read the guidelines</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Fair Play is Encouraged</div>
+                  <p className="mt-1 text-xs text-white/50">
+                    This is a learning challenge. Use your skills, research, and problem-solving abilities. 
+                    Cheating, using shared answers, or collaborating with other teams will result in disqualification.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Do Not Disturb the Platform</div>
+                  <p className="mt-1 text-xs text-white/50">
+                    This challenge is about OSINT research on publicly available information. 
+                    Do not attempt to exploit, attack, or probe any system infrastructure. 
+                    If you find a vulnerability, report it to{" "}
+                    <span className="font-semibold text-white/70">support@nxtgensec.org</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="flex items-start gap-3">
+                <Zap className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <div>
+                  <div className="text-sm font-semibold text-white">Scoring</div>
+                  <p className="mt-1 text-xs text-white/50">
+                    +100 pts per correct answer. Revealing a hint costs -10 pts. 
+                    There is no skip option — you must answer each question before moving on.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="flex items-start gap-3">
+                <Flag className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
+                <div>
+                  <div className="text-sm font-semibold text-white">How It Works</div>
+                  <p className="mt-1 text-xs text-white/50">
+                    5 levels of increasing difficulty. Research publicly available information 
+                    about NxtGenSec to find the answers. Good luck, investigators!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              localStorage.setItem("osint_guidelines_accepted", "1");
+              setGuidelinesAccepted(true);
+            }}
+            className="mt-6 w-full rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:brightness-110"
+          >
+            I Understand — Start Challenge
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isComplete) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] p-4">
@@ -306,7 +368,7 @@ function Tech4Page() {
   if (showLevelIntro && currentQ) {
     const style = LEVEL_COLORS[currentQ.levelColor] ?? LEVEL_COLORS.blue;
     const levelQCount = flatQuestions.filter(
-      (q) => q.level === currentQ.level && !q.isIntel,
+      (q) => q.level === currentQ.level,
     ).length;
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f] p-4">
@@ -314,14 +376,12 @@ function Tech4Page() {
           <div
             className={`mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold ${style.badge}`}
           >
-            {currentQ.isIntel ? <Eye className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-            {currentQ.isIntel ? "Intel Phase" : `Level ${currentQ.level}`}
+            <Shield className="h-4 w-4" />
+            Level {currentQ.level}
           </div>
           <h1 className="text-2xl font-bold text-white">{currentQ.levelName}</h1>
           <p className="mt-2 text-sm text-white/50">
-            {currentQ.isIntel
-              ? "Answer intel file extraction questions"
-              : `${levelQCount} question${levelQCount !== 1 ? "s" : ""} in this level`}
+            {levelQCount} question{levelQCount !== 1 ? "s" : ""} in this level
           </p>
           <div className="mt-3 text-xs text-white/40">
             +100 per correct answer | Hints cost -10 pts each
@@ -400,16 +460,6 @@ function Tech4Page() {
                   : ""
             }`}
           >
-            {currentQ.isIntel && currentQ.intelFile && (
-              <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs text-white/50">
-                  <Eye className="h-3.5 w-3.5" />
-                  Intel File {currentQ.intelFile}
-                </div>
-                <div className="font-mono text-sm text-primary">File #{currentQ.intelFile}</div>
-              </div>
-            )}
-
             <div className="whitespace-pre-wrap text-lg leading-relaxed text-white/90">
               {currentQ.q}
             </div>

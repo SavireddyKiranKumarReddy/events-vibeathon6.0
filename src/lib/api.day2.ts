@@ -115,11 +115,7 @@ export const day2GetOsintQuestions = createServerFn({ method: "GET" })
           fields: q.fields ?? 1,
         })),
       })),
-      intelFiles: (cfg.intel_files ?? []).map((f: any) => ({
-        file: f.file,
-        q: f.q,
-        hint: f.hint ?? null,
-      })),
+      intelFiles: [],
     };
   });
 
@@ -145,25 +141,29 @@ export const day2SubmitOsintAnswer = createServerFn({ method: "POST" })
     if (!config) throw new Error("OSINT config not found");
 
     const cfg = config.config as any;
-    const allQuestions: { q: string; answer: string; type?: string; answers?: string[] }[] = [];
+    const allQuestions: { q: string; answer: string; type?: string; answers?: string[]; normalize?: string }[] = [];
     for (const level of cfg.levels ?? []) {
       for (const question of level.questions ?? []) {
-        allQuestions.push({ q: question.q, answer: question.answer, type: question.type, answers: question.answers });
+        allQuestions.push({ q: question.q, answer: question.answer, type: question.type, answers: question.answers, normalize: question.normalize });
       }
-    }
-    for (const intel of cfg.intel_files ?? []) {
-      allQuestions.push({ q: intel.q, answer: intel.answer });
     }
 
     if (data.questionIndex >= allQuestions.length) throw new Error("Invalid question index");
 
     const qDef = allQuestions[data.questionIndex];
     let isCorrect = false;
+    function normalizeAnswer(val: string, mode?: string): string {
+      let v = val.trim().toLowerCase();
+      if (mode === "strip_prefix") {
+        v = v.replace(/^sha256:\s*/, "").replace(/^sha-?256:\s*/, "");
+      }
+      return v;
+    }
     if (qDef.type === "multi" && qDef.answers) {
-      const userParts = data.answer.split("|||").map((a: string) => a.trim().toLowerCase());
-      isCorrect = qDef.answers.every((a: string, i: number) => (userParts[i] ?? "") === a.trim().toLowerCase());
+      const userParts = data.answer.split("|||").map((a: string) => normalizeAnswer(a));
+      isCorrect = qDef.answers.every((a: string, i: number) => userParts[i] === normalizeAnswer(a));
     } else {
-      isCorrect = data.answer.trim().toLowerCase() === qDef.answer.trim().toLowerCase();
+      isCorrect = normalizeAnswer(data.answer, qDef.normalize) === normalizeAnswer(qDef.answer, qDef.normalize);
     }
 
     const { data: existing } = await supabaseAdmin
