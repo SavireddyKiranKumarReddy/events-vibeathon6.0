@@ -758,8 +758,8 @@ function Day2AdminPanel() {
   if (isLoading) return <div className="text-white/60">Loading Day 2 data…</div>;
   if (!data) return <div className="text-white/60">No data.</div>;
 
-  const { submissions, events, osintProgress } = data as any;
-  const lbVisible = true;
+  const { submissions, events, osintProgress, leaderboardVisible } = data as any;
+  const lbVisible = leaderboardVisible;
 
   return (
     <div className="space-y-4">

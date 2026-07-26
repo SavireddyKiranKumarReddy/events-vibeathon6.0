@@ -361,7 +361,15 @@ export const day2AdminListSubmissions = createServerFn({ method: "GET" })
       .select("*")
       .order("created_at", { ascending: true });
 
-    return { submissions: subs ?? [], events: events ?? [], osintProgress: osintProgress ?? [] };
+    const { data: lbSetting } = await supabaseAdmin
+      .from("day2_settings")
+      .select("setting_value")
+      .eq("setting_key", "leaderboard_visible")
+      .single();
+
+    const leaderboardVisible = (lbSetting?.setting_value as any)?.visible ?? true;
+
+    return { submissions: subs ?? [], events: events ?? [], osintProgress: osintProgress ?? [], leaderboardVisible };
   });
 
 // ---- Day 2: Admin - Override submission ----
