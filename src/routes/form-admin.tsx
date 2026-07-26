@@ -1,0 +1,308 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState, useMemo } from "react";
+import { getFinalSubmissions, updateRoundStatus } from "@/lib/api.submission";
+import {
+  Shield,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ExternalLink,
+  Github,
+  Globe,
+  Users,
+  ChevronDown,
+  Search,
+} from "lucide-react";
+
+export const Route = createFileRoute("/form-admin")({
+  ssr: false,
+  head: () => ({
+    meta: [{ title: "Form Admin — Vibeathon 6.0" }],
+  }),
+  component: FormAdminPage,
+});
+
+const ROUND_OPTIONS = ["submitted", "round_2", "round_3", "rejected"];
+
+function FormAdminPage() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(getFinalSubmissions);
+  const updateFn = useServerFn(updateRoundStatus);
+
+  const { data: submissions, isLoading } = useQuery({
+    queryKey: ["final-submissions"],
+    queryFn: () => listFn(),
+    refetchInterval: 10000,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (p: { id: string; roundStatus: string; adminNotes?: string }) =>
+      updateFn({ data: p }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["final-submissions"] }),
+  });
+
+  const [filterPhases, setFilterPhases] = useState<string>("all");
+  const [filterRound, setFilterRound] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({});
+
+  const subs = (submissions as any[]) ?? [];
+
+  const filtered = useMemo(() => {
+    return subs.filter((s: any) => {
+      if (filterPhases !== "all" && s.phases_completed !== parseInt(filterPhases)) return false;
+      if (filterRound !== "all" && s.round_status !== filterRound) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const searchable = `${s.team_lead_name} ${s.certificate_name} ${s.teammate_1} ${s.teammate_2} ${s.teammate_3} ${s.team_lead_email}`.toLowerCase();
+        if (!searchable.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [subs, filterPhases, filterRound, search]);
+
+  const stats = useMemo(() => {
+    const total = subs.length;
+    const round2 = subs.filter((s: any) => s.round_status === "round_2").length;
+    const round3 = subs.filter((s: any) => s.round_status === "round_3").length;
+    const rejected = subs.filter((s: any) => s.round_status === "rejected").length;
+    const avgPhases = total > 0 ? (subs.reduce((sum: number, s: any) => sum + s.phases_completed, 0) / total).toFixed(1) : "0";
+    return { total, round2, round3, rejected, avgPhases };
+  }, [subs]);
+
+  const input =
+    "rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white text-sm placeholder-white/20 outline-none focus:border-primary";
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-6 flex items-center gap-3">
+          <Shield className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Final Submissions Admin</h1>
+            <p className="text-sm text-white/50">Manage Vibeathon 6.0 project submissions</p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="glass p-3 text-center">
+            <div className="text-xs text-white/40">Total</div>
+            <div className="mt-1 text-2xl font-bold text-white">{stats.total}</div>
+          </div>
+          <div className="glass p-3 text-center">
+            <div className="text-xs text-white/40">Round 2</div>
+            <div className="mt-1 text-2xl font-bold text-blue-400">{stats.round2}</div>
+          </div>
+          <div className="glass p-3 text-center">
+            <div className="text-xs text-white/40">Round 3</div>
+            <div className="mt-1 text-2xl font-bold text-green-400">{stats.round3}</div>
+          </div>
+          <div className="glass p-3 text-center">
+            <div className="text-xs text-white/40">Rejected</div>
+            <div className="mt-1 text-2xl font-bold text-red-400">{stats.rejected}</div>
+          </div>
+          <div className="glass p-3 text-center">
+            <div className="text-xs text-white/40">Avg Phases</div>
+            <div className="mt-1 text-2xl font-bold text-primary">{stats.avgPhases}</div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="glass mb-6 flex flex-wrap items-center gap-3 p-4">
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search team or name..."
+              className={`${input} w-48`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-white/40" />
+            <select
+              className={input}
+              value={filterPhases}
+              onChange={(e) => setFilterPhases(e.target.value)}
+            >
+              <option value="all">All Phases</option>
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <option key={n} value={n}>
+                  {n} phases
+                </option>
+              ))}
+            </select>
+          </div>
+          <select
+            className={input}
+            value={filterRound}
+            onChange={(e) => setFilterRound(e.target.value)}
+          >
+            <option value="all">All Rounds</option>
+            {ROUND_OPTIONS.map((r) => (
+              <option key={r} value={r}>
+                {r.replace("_", " ").toUpperCase()}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-white/40">
+            Showing {filtered.length} of {subs.length}
+          </span>
+        </div>
+
+        {/* Submissions */}
+        {isLoading ? (
+          <div className="text-center text-white/50">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="glass p-8 text-center text-white/50">No submissions found.</div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((s: any) => {
+              const expanded = expandedId === s.id;
+              const roundColor =
+                s.round_status === "round_2"
+                  ? "text-blue-400 bg-blue-500/20 border-blue-500/30"
+                  : s.round_status === "round_3"
+                    ? "text-green-400 bg-green-500/20 border-green-500/30"
+                    : s.round_status === "rejected"
+                      ? "text-red-400 bg-red-500/20 border-red-500/30"
+                      : "text-white/50 bg-white/10 border-white/10";
+
+              return (
+                <div key={s.id} className="glass overflow-hidden">
+                  <div
+                    className="flex cursor-pointer items-center justify-between p-4 transition hover:bg-white/5"
+                    onClick={() => setExpandedId(expanded ? null : s.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="min-w-[6ch] text-center">
+                        <div className="text-xs text-white/40">Phases</div>
+                        <div className="text-lg font-bold text-primary">{s.phases_completed}</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white">{s.certificate_name}</div>
+                        <div className="text-xs text-white/40">{s.team_lead_name} — {s.team_lead_email}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-full border px-3 py-0.5 text-xs font-semibold ${roundColor}`}>
+                        {s.round_status.replace("_", " ").toUpperCase()}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`}
+                      />
+                    </div>
+                  </div>
+
+                  {expanded && (
+                    <div className="border-t border-white/10 p-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs text-white/40">Contact</div>
+                            <div className="text-sm text-white">{s.team_lead_contact}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/40">Certificate Name</div>
+                            <div className="text-sm text-white">{s.certificate_name}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/40">Teammates</div>
+                            <div className="text-sm text-white">
+                              {[s.teammate_1, s.teammate_2, s.teammate_3].filter(Boolean).join(", ") || "None"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/40">Submitted</div>
+                            <div className="text-sm text-white">
+                              {new Date(s.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center gap-1 text-xs text-white/40">
+                              <Github className="h-3 w-3" /> GitHub
+                            </div>
+                            <a href={s.github_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                              {s.github_url} <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1 text-xs text-white/40">
+                              <Globe className="h-3 w-3" /> Deployment
+                            </div>
+                            <a href={s.deployment_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                              {s.deployment_url} <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/40">Project Summary</div>
+                            <div className="text-sm text-white/80">{s.project_summary}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-white/40">Uniqueness</div>
+                            <div className="text-sm text-white/80">{s.project_uniqueness}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Admin Controls */}
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+                        <span className="text-xs text-white/40">Set Round:</span>
+                        {ROUND_OPTIONS.map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => updateMutation.mutate({ id: s.id, roundStatus: r })}
+                            disabled={s.round_status === r || updateMutation.isPending}
+                            className={`rounded-md border px-3 py-1 text-xs font-semibold transition ${
+                              s.round_status === r
+                                ? "border-primary bg-primary/20 text-primary"
+                                : "border-white/10 text-white/50 hover:bg-white/5"
+                            } disabled:opacity-50`}
+                          >
+                            {r.replace("_", " ").toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Admin Notes */}
+                      <div className="mt-3 flex items-center gap-2">
+                        <input
+                          type="text"
+                          className={`${input} flex-1`}
+                          placeholder="Admin notes..."
+                          value={notesMap[s.id] ?? s.admin_notes ?? ""}
+                          onChange={(e) => setNotesMap((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                        />
+                        <button
+                          onClick={() =>
+                            updateMutation.mutate({
+                              id: s.id,
+                              roundStatus: s.round_status,
+                              adminNotes: notesMap[s.id] ?? "",
+                            })
+                          }
+                          disabled={updateMutation.isPending}
+                          className="rounded-md bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/20 disabled:opacity-50"
+                        >
+                          Save Note
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

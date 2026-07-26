@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as Day2RouteImport } from './routes/day2'
+import { Route as FormAdminRouteImport } from './routes/form-admin'
+import { Route as SubmissionRouteImport } from './routes/submission'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
@@ -49,6 +51,16 @@ const AuthRoute = AuthRouteImport.update({
 const Day2Route = Day2RouteImport.update({
   id: '/day2',
   path: '/day2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormAdminRoute = FormAdminRouteImport.update({
+  id: '/form-admin',
+  path: '/form-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmissionRoute = SubmissionRouteImport.update({
+  id: '/submission',
+  path: '/submission',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -148,6 +160,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
+  '/form-admin': typeof FormAdminRoute
+  '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -170,6 +184,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/form-admin': typeof FormAdminRoute
+  '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -195,6 +211,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
+  '/form-admin': typeof FormAdminRoute
+  '/submission': typeof SubmissionRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
@@ -220,6 +238,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/day2'
+    | '/form-admin'
+    | '/submission'
     | '/admin'
     | '/dashboard'
     | '/events'
@@ -242,6 +262,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/form-admin'
+    | '/submission'
     | '/admin'
     | '/dashboard'
     | '/events'
@@ -266,6 +288,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/day2'
+    | '/form-admin'
+    | '/submission'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
@@ -291,6 +315,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   Day2Route: typeof Day2RouteWithChildren
+  FormAdminRoute: typeof FormAdminRoute
+  SubmissionRoute: typeof SubmissionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -321,6 +347,20 @@ declare module '@tanstack/react-router' {
       path: '/day2'
       fullPath: '/day2'
       preLoaderRoute: typeof Day2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/form-admin': {
+      id: '/form-admin'
+      path: '/form-admin'
+      fullPath: '/form-admin'
+      preLoaderRoute: typeof FormAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submission': {
+      id: '/submission'
+      path: '/submission'
+      fullPath: '/submission'
+      preLoaderRoute: typeof SubmissionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -519,6 +559,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   Day2Route: Day2RouteWithChildren,
+  FormAdminRoute: FormAdminRoute,
+  SubmissionRoute: SubmissionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
