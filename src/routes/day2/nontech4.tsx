@@ -19,6 +19,9 @@ import {
   ChevronRight,
   Clock,
   Send,
+  XCircle,
+  Timer,
+  Bolt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/day2/nontech4")({
@@ -54,13 +57,18 @@ function NonTech4() {
   const gradeFn = useServerFn(day2GradeSpeedQuiz);
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answerTimestamps, setAnswerTimestamps] = useState<Record<number, number>>({});
   const [currentQ, setCurrentQ] = useState(0);
   const [quizStarted, setQuizStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [quizStartTime, setQuizStartTime] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [result, setResult] = useState<{
     correct: number;
+    wrong: number;
+    fastAnswers: number;
+    allFastBonus: boolean;
     total: number;
-    timeRemaining: number;
+    totalTime: number;
     quizScore: number;
   } | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -88,9 +96,7 @@ function NonTech4() {
 
   const existingSubmission = submissions?.find((s: any) => s.event_id === event?.id);
   const questions: { q: string; options: string[] }[] = (config as any)?.questions ?? [];
-  const timeLimit: number = (config as any)?.time_limit ?? 300;
-
-  const timeUsed = quizStarted ? timeLimit - timeLeft : 0;
+  const timeLimit: number = (config as any)?.time_limit ?? 60;
 
   useEffect(() => {
     if (!quizStarted || submitted) return;
@@ -114,22 +120,34 @@ function NonTech4() {
     }
   }, [timeLeft]);
 
+  function recordAnswer(qIndex: number, letter: string) {
+    setAnswers((prev) => ({ ...prev, [qIndex]: letter }));
+    if (!answerTimestamps[qIndex] && quizStartTime > 0) {
+      const elapsed = (Date.now() - quizStartTime) / 1000;
+      setAnswerTimestamps((prev) => ({ ...prev, [qIndex]: elapsed }));
+    }
+  }
+
   const grade = useMutation({
-    mutationFn: (timeTaken: number) =>
+    mutationFn: (totalTime: number) =>
       gradeFn({
         data: {
           teamName: team.teamName,
           leadName: team.leadName,
           eventId: event!.id,
           answers: questions.map((_: any, i: number) => answers[i] ?? ""),
-          timeTaken,
+          answerTimestamps: questions.map((_: any, i: number) => answerTimestamps[i] ?? 999),
+          totalTime,
         },
       }),
     onSuccess: (res: any) => {
       setResult({
         correct: res.correct,
+        wrong: res.wrong,
+        fastAnswers: res.fastAnswers,
+        allFastBonus: res.allFastBonus,
         total: res.total,
-        timeRemaining: res.timeRemaining,
+        totalTime: res.totalTime,
         quizScore: res.quizScore,
       });
       setErr(null);
@@ -145,7 +163,7 @@ function NonTech4() {
 
   function handleSubmit() {
     if (submitted || grade.isPending) return;
-    const elapsed = timeLimit - timeLeft;
+    const elapsed = Math.round(((Date.now() - quizStartTime) / 1000) * 10) / 10;
     grade.mutate(elapsed);
   }
 
@@ -186,8 +204,11 @@ function NonTech4() {
     const r = result ?? {};
     const score = r.quizScore ?? existingSubmission?.score ?? null;
     const correct = r.correct ?? null;
+    const wrong = r.wrong ?? null;
+    const fastAnswers = r.fastAnswers ?? 0;
+    const allFastBonus = r.allFastBonus ?? false;
     const total = r.total ?? questions.length;
-    const timeRemaining = r.timeRemaining ?? null;
+    const totalTime = r.totalTime ?? null;
 
     return (
       <div className="mx-auto max-w-4xl space-y-6">
@@ -200,7 +221,8 @@ function NonTech4() {
             )}
             <h1 className="text-2xl font-semibold text-white">Speed Quiz Completed</h1>
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-4">
+
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="glass p-4 text-center">
               <Trophy className="mx-auto h-6 w-6 text-primary" />
               <div className="mt-2 text-2xl font-bold text-primary">{score ?? "—"}</div>
@@ -209,21 +231,43 @@ function NonTech4() {
             <div className="glass p-4 text-center">
               <CheckCircle2 className="mx-auto h-6 w-6 text-[#22c55e]" />
               <div className="mt-2 text-2xl font-bold text-[#22c55e]">
-                {correct !== null ? `${correct}/${total}` : "—"}
+                {correct !== null ? correct : "—"}
               </div>
-              <div className="text-xs text-white/50">Correct Answers</div>
+              <div className="text-xs text-white/50">Correct (+{correct !== null ? correct * 100 : 0})</div>
             </div>
             <div className="glass p-4 text-center">
-              <Clock className="mx-auto h-6 w-6 text-[#3b82f6]" />
-              <div className="mt-2 text-2xl font-bold text-[#3b82f6]">
-                {timeRemaining !== null ? formatTime(timeRemaining) : "—"}
+              <XCircle className="mx-auto h-6 w-6 text-[#ef4444]" />
+              <div className="mt-2 text-2xl font-bold text-[#ef4444]">
+                {wrong !== null ? wrong : "—"}
               </div>
-              <div className="text-xs text-white/50">Time Remaining</div>
+              <div className="text-xs text-white/50">Wrong ({wrong !== null ? `-${wrong * 10}` : 0})</div>
+            </div>
+            <div className="glass p-4 text-center">
+              <Bolt className="mx-auto h-6 w-6 text-[#f59e0b]" />
+              <div className="mt-2 text-2xl font-bold text-[#f59e0b]">
+                {fastAnswers > 0 ? `+${fastAnswers * 20}` : "0"}
+              </div>
+              <div className="text-xs text-white/50">Fast Bonus ({fastAnswers}×&lt;5s)</div>
             </div>
           </div>
-          <div className="mt-4 glass p-3 text-center text-sm text-white/60">
-            Score = Correct × 10 + Remaining Seconds × 2
+
+          {allFastBonus && (
+            <div className="mt-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 p-3 text-center text-sm font-semibold text-[#22c55e]">
+              All 10 questions answered in under 30s! +30 bonus
+            </div>
+          )}
+
+          {totalTime !== null && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-white/50">
+              <Timer className="h-4 w-4" />
+              Completed in {totalTime.toFixed(1)}s
+            </div>
+          )}
+
+          <div className="mt-4 glass p-3 text-center text-xs text-white/40">
+            Correct +100 | Wrong -10 | Fast (&lt;5s) +20 | All &lt;30s +30
           </div>
+
           {existingSubmission && (
             <p className="mt-3 text-xs text-white/50">Submitted at {formatIST(existingSubmission.submitted_at)}</p>
           )}
@@ -248,21 +292,20 @@ function NonTech4() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Header */}
       <div>
         <div className="text-xs uppercase tracking-widest text-white/50">Non-Tech · Event 4 · Challenge</div>
         <h1 className="mt-2 text-3xl font-semibold text-white">Speed Quiz</h1>
         <p className="mt-1 text-sm text-white/60">
-          Answer {questions.length} questions as fast as you can. Faster = higher score.
+          Answer {questions.length} questions as fast as you can. Speed matters!
         </p>
       </div>
 
-      {/* Timer + Progress Bar */}
+      {/* Timer + Progress */}
       <div className="glass p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Clock className={`h-5 w-5 ${timeLeft <= 30 ? "text-[#ef4444]" : "text-[#3b82f6]"}`} />
-            <span className={`font-mono text-2xl font-bold ${timeLeft <= 30 ? "text-[#ef4444]" : "text-white"}`}>
+            <Clock className={`h-5 w-5 ${timeLeft <= 10 ? "text-[#ef4444]" : "text-[#3b82f6]"}`} />
+            <span className={`font-mono text-2xl font-bold ${timeLeft <= 10 ? "text-[#ef4444]" : "text-white"}`}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -276,10 +319,9 @@ function NonTech4() {
             </div>
           </div>
         </div>
-        {/* Time bar */}
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
-            className={`h-full rounded-full transition-all ${timeLeft <= 30 ? "bg-[#ef4444]" : "bg-[#3b82f6]"}`}
+            className={`h-full rounded-full transition-all ${timeLeft <= 10 ? "bg-[#ef4444]" : "bg-[#3b82f6]"}`}
             style={{ width: `${(timeLeft / timeLimit) * 100}%` }}
           />
         </div>
@@ -291,15 +333,26 @@ function NonTech4() {
           <Zap className="mx-auto h-12 w-12 text-primary" />
           <h2 className="mt-4 text-xl font-bold text-white">Ready to Start?</h2>
           <p className="mt-2 text-sm text-white/60">
-            You have {formatTime(timeLimit)} to answer {questions.length} questions.
-            <br />
-            Each correct answer = 10 points + speed bonus.
-            <br />
-            Once you start, the timer cannot be paused.
+            You have <span className="font-bold text-white">{formatTime(timeLimit)}</span> to answer {questions.length} questions.
           </p>
+          <div className="mt-4 mx-auto max-w-xs space-y-2 text-left text-sm">
+            <div className="flex items-center gap-2 text-[#22c55e]">
+              <CheckCircle2 className="h-4 w-4 shrink-0" /> Correct = +100 pts
+            </div>
+            <div className="flex items-center gap-2 text-[#ef4444]">
+              <XCircle className="h-4 w-4 shrink-0" /> Wrong = -10 pts
+            </div>
+            <div className="flex items-center gap-2 text-[#f59e0b]">
+              <Bolt className="h-4 w-4 shrink-0" /> Answered in &lt;5s = +20 bonus
+            </div>
+            <div className="flex items-center gap-2 text-[#3b82f6]">
+              <Timer className="h-4 w-4 shrink-0" /> All 10 in &lt;30s = +30 bonus
+            </div>
+          </div>
           <button
             onClick={() => {
               setTimeLeft(timeLimit);
+              setQuizStartTime(Date.now());
               setQuizStarted(true);
             }}
             className="mt-6 rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
@@ -312,7 +365,6 @@ function NonTech4() {
       {/* Question Card */}
       {quizStarted && (
         <>
-          {/* Question dots */}
           <div className="flex flex-wrap gap-2">
             {questions.map((_: any, i: number) => (
               <button
@@ -331,7 +383,6 @@ function NonTech4() {
             ))}
           </div>
 
-          {/* Current question */}
           <div className="glass p-6">
             <div className="flex items-start gap-4">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-lg font-bold text-primary">
@@ -346,7 +397,7 @@ function NonTech4() {
                     return (
                       <button
                         key={j}
-                        onClick={() => setAnswers((prev) => ({ ...prev, [currentQ]: letter }))}
+                        onClick={() => recordAnswer(currentQ, letter)}
                         className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm transition ${
                           selected
                             ? "border-primary bg-primary/10 text-white"
@@ -369,7 +420,6 @@ function NonTech4() {
             </div>
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-between">
             <button
               disabled={currentQ === 0}
@@ -411,7 +461,7 @@ function NonTech4() {
               You have answered {answeredCount}/{questions.length} questions.
               {answeredCount < questions.length && (
                 <span className="block mt-1 text-[#f97316]">
-                  {questions.length - answeredCount} question(s) unanswered will be marked wrong.
+                  {questions.length - answeredCount} unanswered = -{(questions.length - answeredCount) * 10} pts
                 </span>
               )}
             </p>

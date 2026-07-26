@@ -320,14 +320,22 @@ export const day2GradeDevToolsCtf = createServerFn({ method: "POST" })
 // ---- Day 2: Grade Speed Quiz (server-side) ----
 export const day2GradeSpeedQuiz = createServerFn({ method: "POST" })
   .inputValidator(
-    (d: { teamName: string; leadName: string; eventId: string; answers: string[]; timeTaken: number }) =>
+    (d: {
+      teamName: string;
+      leadName: string;
+      eventId: string;
+      answers: string[];
+      answerTimestamps: number[];
+      totalTime: number;
+    }) =>
       z
         .object({
           teamName: z.string().min(1),
           leadName: z.string().min(1),
           eventId: z.string().uuid(),
           answers: z.array(z.string()),
-          timeTaken: z.number().min(0),
+          answerTimestamps: z.array(z.number()),
+          totalTime: z.number().min(0),
         })
         .parse(d)
   )
@@ -341,23 +349,40 @@ export const day2GradeSpeedQuiz = createServerFn({ method: "POST" })
 
     const cfg = config.config as any;
     const questions: { q: string; options: string[]; answer: string }[] = cfg.questions ?? [];
-    const timeLimit = cfg.time_limit ?? 300;
 
     let correct = 0;
+    let wrong = 0;
+    let fastAnswers = 0;
+
     for (let i = 0; i < questions.length; i++) {
       const userAns = (data.answers[i] ?? "").trim().toLowerCase();
       const correctAns = questions[i].answer.trim().toLowerCase();
-      if (userAns === correctAns) correct++;
+      if (!userAns) {
+        wrong++;
+      } else if (userAns === correctAns) {
+        correct++;
+        if ((data.answerTimestamps[i] ?? 999) < 5) fastAnswers++;
+      } else {
+        wrong++;
+      }
     }
 
-    const timeRemaining = Math.max(0, timeLimit - data.timeTaken);
-    const quizScore = correct * 10 + timeRemaining * 2;
+    const answeredCount = data.answers.filter((a) => a.trim()).length;
+    const allFastBonus = answeredCount === questions.length && data.totalTime < 30;
+    const quizScore = correct * 100 - wrong * 10 + fastAnswers * 20 + (allFastBonus ? 30 : 0);
 
     const insert: any = {
       team_name: data.teamName,
       lead_name: data.leadName,
       event_id: data.eventId,
-      answer: JSON.stringify({ answers: data.answers, correct, timeTaken: data.timeTaken, timeRemaining }),
+      answer: JSON.stringify({
+        answers: data.answers,
+        correct,
+        wrong,
+        fastAnswers,
+        allFastBonus,
+        totalTime: data.totalTime,
+      }),
       auto_correct: correct === questions.length,
       score: quizScore,
     };
@@ -367,7 +392,7 @@ export const day2GradeSpeedQuiz = createServerFn({ method: "POST" })
       if (error.code === "23505") throw new Error("You have already submitted for this event");
       throw new Error("Unable to submit. Please try again.");
     }
-    return { ok: true, correct, total: questions.length, timeRemaining, quizScore };
+    return { ok: true, correct, wrong, fastAnswers, allFastBonus, total: questions.length, totalTime: data.totalTime, quizScore };
   });
 
 // ---- Day 2: Leaderboard ----
