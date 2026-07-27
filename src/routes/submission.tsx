@@ -5,7 +5,7 @@ import { useState, useRef } from "react";
 import { submitFinalProject, uploadFile } from "@/lib/api.submission";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
-  MessageSquare, Star, ExternalLink,
+  Star, ExternalLink, FileText, ImageIcon, Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/submission")({
@@ -17,6 +17,12 @@ export const Route = createFileRoute("/submission")({
 const inputCls = "w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 outline-none transition-all focus:border-primary focus:bg-white/[0.07] focus:ring-1 focus:ring-primary/30 text-sm";
 const labelCls = "block text-sm font-medium text-white/70 mb-1.5";
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
 function SubmissionPage() {
   const submitFn = useServerFn(submitFinalProject);
   const pptRef = useRef<HTMLInputElement>(null);
@@ -24,10 +30,12 @@ function SubmissionPage() {
   const uploadFn = useServerFn(uploadFile);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [uploadingPpt, setUploadingPpt] = useState(false);
-  const [uploadingFeedback, setUploadingFeedback] = useState(false);
+  const [pptState, setPptState] = useState<"idle" | "validating" | "uploading" | "done" | "error">("idle");
   const [pptName, setPptName] = useState("");
+  const [pptSize, setPptSize] = useState("");
+  const [feedbackState, setFeedbackState] = useState<"idle" | "validating" | "uploading" | "done" | "error">("idle");
   const [feedbackName, setFeedbackName] = useState("");
+  const [feedbackSize, setFeedbackSize] = useState("");
   const [form, setForm] = useState({
     teamName: "", teamLeadName: "", teamLeadContact: "", teamLeadEmail: "",
     teammate1: "", teammate2: "", teammate3: "",
@@ -55,33 +63,91 @@ function SubmissionPage() {
   async function handlePpt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") { setError("Please upload your PPT as a PDF file."); return; }
-    if (file.size > 10 * 1024 * 1024) { setError("File size must be under 10MB."); return; }
-    setUploadingPpt(true); setError(""); setPptName(file.name);
+
+    setPptState("validating");
+    setError("");
+
+    if (file.type !== "application/pdf") {
+      setError(`"${file.name}" is not a PDF file. Only PDF files are accepted for PPT.`);
+      setPptState("error");
+      if (pptRef.current) pptRef.current.value = "";
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 10MB.`);
+      setPptState("error");
+      if (pptRef.current) pptRef.current.value = "";
+      return;
+    }
+
+    setPptName(file.name);
+    setPptSize(formatSize(file.size));
+    setPptState("uploading");
+
     try {
       const base64 = await fileToBase64(file);
       const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: "application/pdf", folder: "ppt" } });
       update("pptUrl", result.url);
+      setPptState("done");
     } catch {
-      setError("Upload failed. Please try again.");
+      setError("PPT upload failed. Please try again.");
+      setPptState("error");
+      setPptName("");
+      setPptSize("");
     }
-    setUploadingPpt(false);
+  }
+
+  function removePpt() {
+    update("pptUrl", "");
+    setPptName("");
+    setPptSize("");
+    setPptState("idle");
+    if (pptRef.current) pptRef.current.value = "";
   }
 
   async function handleFeedback(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setError("Please upload an image file (JPG, PNG, etc.)."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("Screenshot must be under 5MB."); return; }
-    setUploadingFeedback(true); setError(""); setFeedbackName(file.name);
+
+    setFeedbackState("validating");
+    setError("");
+
+    if (!file.type.startsWith("image/")) {
+      setError(`"${file.name}" is not an image file. Please upload a JPG, PNG, or similar image.`);
+      setFeedbackState("error");
+      if (feedbackRef.current) feedbackRef.current.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 5MB.`);
+      setFeedbackState("error");
+      if (feedbackRef.current) feedbackRef.current.value = "";
+      return;
+    }
+
+    setFeedbackName(file.name);
+    setFeedbackSize(formatSize(file.size));
+    setFeedbackState("uploading");
+
     try {
       const base64 = await fileToBase64(file);
       const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: file.type, folder: "feedback" } });
       update("feedbackScreenshotUrl", result.url);
+      setFeedbackState("done");
     } catch {
-      setError("Upload failed. Please try again.");
+      setError("Screenshot upload failed. Please try again.");
+      setFeedbackState("error");
+      setFeedbackName("");
+      setFeedbackSize("");
     }
-    setUploadingFeedback(false);
+  }
+
+  function removeFeedback() {
+    update("feedbackScreenshotUrl", "");
+    setFeedbackName("");
+    setFeedbackSize("");
+    setFeedbackState("idle");
+    if (feedbackRef.current) feedbackRef.current.value = "";
   }
 
   const submit = useMutation({
@@ -164,15 +230,50 @@ function SubmissionPage() {
               <div>
                 <label className={labelCls}>PPT (PDF only, max 10MB) *</label>
                 <input type="file" ref={pptRef} accept=".pdf" className="hidden" onChange={handlePpt} />
-                <button type="button" onClick={() => pptRef.current?.click()} disabled={uploadingPpt} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-5 text-sm text-white/40 transition-all hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60 disabled:opacity-50">
-                  <Upload className="h-4 w-4" />
-                  {uploadingPpt ? "Uploading..." : form.pptUrl ? (pptName || "PDF uploaded") : "Click to upload your PPT"}
-                </button>
-                {form.pptUrl && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
-                    <button type="button" onClick={() => { update("pptUrl", ""); setPptName(""); if (pptRef.current) pptRef.current.value = ""; }} className="ml-2 text-red-400 hover:underline">Remove</button>
+
+                {pptState === "done" && form.pptUrl ? (
+                  <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+                        <FileText className="h-5 w-5 text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-400 truncate">{pptName}</p>
+                        <p className="text-xs text-white/40">{pptSize} — PDF — Uploaded successfully</p>
+                      </div>
+                      <button type="button" onClick={removePpt} className="shrink-0 rounded-md bg-red-500/10 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition">Remove</button>
+                    </div>
                   </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => pptRef.current?.click()}
+                    disabled={pptState === "uploading" || pptState === "validating"}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition-all disabled:opacity-50 ${
+                      pptState === "error"
+                        ? "border-red-500/40 bg-red-500/5 text-red-400"
+                        : pptState === "uploading" || pptState === "validating"
+                          ? "border-primary/40 bg-primary/5 text-primary"
+                          : "border-white/20 bg-white/5 text-white/40 hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60"
+                    }`}
+                  >
+                    {pptState === "uploading" || pptState === "validating" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{pptState === "validating" ? "Validating file..." : "Uploading to server..."}</span>
+                      </>
+                    ) : pptState === "error" ? (
+                      <>
+                        <XCircle className="h-4 w-4" />
+                        <span>Upload failed — click to try again</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        <span>Click to upload your PPT (PDF only, max 10MB)</span>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
               <div>
@@ -238,17 +339,52 @@ function SubmissionPage() {
                 <p className="mt-2 text-xs text-white/30">Click the link above, write your review, then come back here to upload the screenshot.</p>
               </div>
               <div>
-                <label className={labelCls}>Upload screenshot of your review * <span className="text-xs text-white/30">(image, max 5MB)</span></label>
+                <label className={labelCls}>Upload screenshot of your review * <span className="text-xs text-white/30">(JPG/PNG, max 5MB)</span></label>
                 <input type="file" ref={feedbackRef} accept="image/*" className="hidden" onChange={handleFeedback} />
-                <button type="button" onClick={() => feedbackRef.current?.click()} disabled={uploadingFeedback} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-5 text-sm text-white/40 transition-all hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60 disabled:opacity-50">
-                  <Upload className="h-4 w-4" />
-                  {uploadingFeedback ? "Uploading..." : form.feedbackScreenshotUrl ? (feedbackName || "Screenshot uploaded") : "Click to upload screenshot"}
-                </button>
-                {form.feedbackScreenshotUrl && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
-                    <button type="button" onClick={() => { update("feedbackScreenshotUrl", ""); setFeedbackName(""); if (feedbackRef.current) feedbackRef.current.value = ""; }} className="ml-2 text-red-400 hover:underline">Remove</button>
+
+                {feedbackState === "done" && form.feedbackScreenshotUrl ? (
+                  <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+                        <ImageIcon className="h-5 w-5 text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-400 truncate">{feedbackName}</p>
+                        <p className="text-xs text-white/40">{feedbackSize} — Image — Uploaded successfully</p>
+                      </div>
+                      <button type="button" onClick={removeFeedback} className="shrink-0 rounded-md bg-red-500/10 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition">Remove</button>
+                    </div>
                   </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => feedbackRef.current?.click()}
+                    disabled={feedbackState === "uploading" || feedbackState === "validating"}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition-all disabled:opacity-50 ${
+                      feedbackState === "error"
+                        ? "border-red-500/40 bg-red-500/5 text-red-400"
+                        : feedbackState === "uploading" || feedbackState === "validating"
+                          ? "border-primary/40 bg-primary/5 text-primary"
+                          : "border-white/20 bg-white/5 text-white/40 hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60"
+                    }`}
+                  >
+                    {feedbackState === "uploading" || feedbackState === "validating" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{feedbackState === "validating" ? "Validating file..." : "Uploading to server..."}</span>
+                      </>
+                    ) : feedbackState === "error" ? (
+                      <>
+                        <XCircle className="h-4 w-4" />
+                        <span>Upload failed — click to try again</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        <span>Click to upload screenshot (JPG/PNG, max 5MB)</span>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
               <div>
