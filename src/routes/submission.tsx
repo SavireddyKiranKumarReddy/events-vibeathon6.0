@@ -87,10 +87,12 @@ function SubmissionPage() {
     try {
       const base64 = await fileToBase64(file);
       const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: "application/pdf", folder: "ppt" } });
+      if (!result || !result.url) throw new Error("Upload returned no URL");
       update("pptUrl", result.url);
       setPptState("done");
-    } catch {
-      setError("PPT upload failed. Please try again.");
+    } catch (err: any) {
+      console.error("PPT upload error:", err);
+      setError("PPT upload failed. Please try again. (" + (err?.message || "unknown") + ")");
       setPptState("error");
       setPptName("");
       setPptSize("");
