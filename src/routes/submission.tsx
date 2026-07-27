@@ -4,7 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
 import { submitFinalProject } from "@/lib/api.submission";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle, MessageSquare, Play } from "lucide-react";
+import {
+  CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
+  MessageSquare, Play, Star, ExternalLink,
+} from "lucide-react";
 
 export const Route = createFileRoute("/submission")({
   ssr: false,
@@ -28,10 +31,10 @@ function SubmissionPage() {
   const [form, setForm] = useState({
     teamLeadName: "", teamLeadContact: "", teamLeadEmail: "",
     teammate1: "", teammate2: "", teammate3: "",
-    githubUrl: "", deploymentUrl: "", pptUrl: "",
+    githubUrl: "", deploymentUrl: "", pptUrl: "", videoLink: "",
     phasesCompleted: 0,
     projectSummary: "", projectUniqueness: "",
-    eventExperience: "", feedbackScreenshotUrl: "", videoLink: "",
+    eventExperience: "", feedbackScreenshotUrl: "",
   });
 
   const update = (f: string, v: string | number) => setForm(p => ({ ...p, [f]: v }));
@@ -82,7 +85,7 @@ function SubmissionPage() {
         <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10">
           <CheckCircle2 className="h-10 w-10 text-green-400" />
         </div>
-        <h1 className="text-3xl font-bold text-white">You're all set! 🎉</h1>
+        <h1 className="text-3xl font-bold text-white">You're all set!</h1>
         <p className="mt-4 text-base text-white/60">Your submission has been recorded successfully. We'll review it soon — best of luck!</p>
         <p className="mt-3 text-sm text-white/40">{form.teamLeadName}</p>
       </div>
@@ -119,9 +122,9 @@ function SubmissionPage() {
             <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Users className="h-5 w-5 text-primary" /> Your Details</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelCls}>Full Name *</label>
+                <label className={labelCls}>Team Lead Name *</label>
                 <p className="mb-1.5 text-xs text-white/30">This name will appear on your certificate — make sure it's correct!</p>
-                <input type="text" className={inputCls} placeholder="e.g. Kiran Kumar Reddy" value={form.teamLeadName} onChange={e => update("teamLeadName", e.target.value)} />
+                <input type="text" className={inputCls} placeholder="Enter your full name" value={form.teamLeadName} onChange={e => update("teamLeadName", e.target.value)} />
               </div>
               <div><label className={labelCls}>Contact Number *</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
               <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} placeholder="you@example.com" value={form.teamLeadEmail} onChange={e => update("teamLeadEmail", e.target.value)} /></div>
@@ -147,7 +150,7 @@ function SubmissionPage() {
                 <input type="file" ref={pptRef} accept=".pdf" className="hidden" onChange={handlePpt} />
                 <button type="button" onClick={() => pptRef.current?.click()} disabled={uploadingPpt} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-5 text-sm text-white/40 transition-all hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60 disabled:opacity-50">
                   <Upload className="h-4 w-4" />
-                  {uploadingPpt ? "Uploading..." : form.pptUrl ? (pptName || "PDF uploaded ✓") : "Click to upload your PPT"}
+                  {uploadingPpt ? "Uploading..." : form.pptUrl ? (pptName || "PDF uploaded") : "Click to upload your PPT"}
                 </button>
                 {form.pptUrl && (
                   <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
@@ -155,6 +158,10 @@ function SubmissionPage() {
                     <button type="button" onClick={() => { update("pptUrl", ""); setPptName(""); if (pptRef.current) pptRef.current.value = ""; }} className="ml-2 text-red-400 hover:underline">Remove</button>
                   </div>
                 )}
+              </div>
+              <div>
+                <label className={labelCls}>Video Link <span className="text-xs text-white/30">(YouTube / Instagram / X — optional)</span></label>
+                <input type="url" className={inputCls} placeholder="https://youtube.com/..." value={form.videoLink} onChange={e => update("videoLink", e.target.value)} />
               </div>
             </div>
           </div>
@@ -198,20 +205,28 @@ function SubmissionPage() {
           </div>
 
           <div className="glass p-6">
-            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-white"><MessageSquare className="h-5 w-5 text-primary" /> Your Vibeathon Experience</h2>
-            <p className="mb-5 text-sm text-white/50">We'd love to hear from you! Share your experience in your own words.</p>
-            <div className="space-y-4">
+            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-white"><Star className="h-5 w-5 text-primary" /> Feedback</h2>
+            <p className="mb-5 text-sm text-white/50">Your feedback matters to us! It helps us make Vibeathon even better next time.</p>
+            <div className="space-y-5">
               <div>
-                <label className={labelCls}>Share your Vibeathon 6.0 experience * <span className="text-xs text-white/30">(a few sentences about what you enjoyed, learned, or any feedback)</span></label>
-                <textarea className={`${inputCls} resize-none`} rows={4} maxLength={1500} placeholder="I enjoyed... I learned... My favourite part was..." value={form.eventExperience} onChange={e => update("eventExperience", e.target.value)} />
-                <div className="mt-1 text-right text-xs text-white/30">{form.eventExperience.length}/1500</div>
+                <label className={labelCls}>Share your Google Review *</label>
+                <a
+                  href="https://g.page/r/CaZ6E1PLfaKgEBM/review"
+                  target="_blank"
+                  rel="noopener"
+                  className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary transition-all hover:bg-primary/20 hover:border-primary/50"
+                >
+                  <span className="flex items-center gap-2"><Star className="h-4 w-4" /> Leave a review on Google</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <p className="mt-2 text-xs text-white/30">Click the link above, write your review, then come back here to upload the screenshot.</p>
               </div>
               <div>
-                <label className={labelCls}>Upload a screenshot of your feedback * <span className="text-xs text-white/30">(image, max 5MB — can be a social post, chat message, or note)</span></label>
+                <label className={labelCls}>Upload screenshot of your review * <span className="text-xs text-white/30">(image, max 5MB)</span></label>
                 <input type="file" ref={feedbackRef} accept="image/*" className="hidden" onChange={handleFeedback} />
                 <button type="button" onClick={() => feedbackRef.current?.click()} disabled={uploadingFeedback} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-5 text-sm text-white/40 transition-all hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60 disabled:opacity-50">
                   <Upload className="h-4 w-4" />
-                  {uploadingFeedback ? "Uploading..." : form.feedbackScreenshotUrl ? (feedbackName || "Screenshot uploaded ✓") : "Click to upload screenshot"}
+                  {uploadingFeedback ? "Uploading..." : form.feedbackScreenshotUrl ? (feedbackName || "Screenshot uploaded") : "Click to upload screenshot"}
                 </button>
                 {form.feedbackScreenshotUrl && (
                   <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
@@ -221,8 +236,9 @@ function SubmissionPage() {
                 )}
               </div>
               <div>
-                <label className={labelCls}>Video link <span className="text-xs text-white/30">(YouTube / Instagram / X — optional)</span></label>
-                <input type="url" className={inputCls} placeholder="https://youtube.com/..." value={form.videoLink} onChange={e => update("videoLink", e.target.value)} />
+                <label className={labelCls}>Any additional thoughts? <span className="text-xs text-white/30">(optional)</span></label>
+                <textarea className={`${inputCls} resize-none`} rows={3} maxLength={1500} placeholder="Anything else you'd like to share..." value={form.eventExperience} onChange={e => update("eventExperience", e.target.value)} />
+                <div className="mt-1 text-right text-xs text-white/30">{form.eventExperience.length}/1500</div>
               </div>
             </div>
           </div>
@@ -233,7 +249,7 @@ function SubmissionPage() {
           </div>
 
           <button type="submit" disabled={!canSubmit || submit.isPending} className="w-full rounded-lg bg-gradient-to-r from-primary to-primary/80 px-6 py-4 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-lg hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none">
-            {submit.isPending ? "Submitting..." : "Submit My Project 🚀"}
+            {submit.isPending ? "Submitting..." : "Submit My Project"}
           </button>
         </form>
       </div>
