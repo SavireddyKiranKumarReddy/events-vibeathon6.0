@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { submitFinalProject, createSignedUploadUrl, getPublicUrl, uploadFileServer } from "@/lib/api.submission";
+import { submitFinalProject } from "@/lib/api.submission";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
@@ -25,42 +25,16 @@ function formatSize(bytes: number) {
 }
 
 async function uploadFile(file: File, folder: string): Promise<string> {
-  const MAX_DIRECT = 3 * 1024 * 1024;
   const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`;
 
-  if (file.size <= MAX_DIRECT) {
-    try {
-      const { data: signed, error: signErr } = await supabase.storage
-        .from("event-submissions")
-        .createSignedUploadUrl(path);
-      if (signErr) throw new Error(signErr.message);
+  const { error: upErr } = await supabase.storage
+    .from("event-submissions")
+    .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+  if (upErr) throw new Error(upErr.message);
 
-      const { error: upErr } = await supabase.storage
-        .from("event-submissions")
-        .uploadToSignedUrl(path, signed.token, file);
-      if (upErr) throw new Error(upErr.message);
-
-      const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(path);
-      return urlData.publicUrl;
-    } catch (e) {
-      console.warn("uploadToSignedUrl failed, trying server fallback:", e);
-    }
-  }
-
-  const fileToBase64 = (f: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(f);
-    });
-
-  const base64 = await fileToBase64(file);
-  const result = await uploadFileServer({
-    data: { fileBase64: base64, fileName: file.name, contentType: file.type || "application/octet-stream", folder },
-  });
-  return result.url;
+  const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(path);
+  return urlData.publicUrl;
 }
 
 function SubmissionPage() {
