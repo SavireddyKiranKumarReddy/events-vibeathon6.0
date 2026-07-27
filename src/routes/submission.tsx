@@ -105,12 +105,12 @@ function SubmissionPage() {
 
         <div className="glass mb-8 p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white"><Info className="h-5 w-5 text-primary" /> Before you submit</h2>
-          <ol className="space-y-3 text-sm text-white/60">
-            <li className="flex gap-2"><span className="font-semibold text-primary shrink-0">1.</span>Submit a <strong className="text-white/80">public GitHub link</strong> with a proper README (team name, roles, key info).</li>
-            <li className="flex gap-2"><span className="font-semibold text-primary shrink-0">2.</span>Submit a <strong className="text-white/80">public deployment link</strong> where your project is live.</li>
-            <li className="flex gap-2"><span className="font-semibold text-primary shrink-0">3.</span>Upload your <strong className="text-white/80">PPT as PDF</strong> (max 10MB).</li>
-            <li className="flex gap-2"><span className="font-semibold text-primary shrink-0">4.</span>Your <strong className="text-white/80">team lead name</strong> will appear on the certificate — double-check before submitting. <span className="text-yellow-400">No changes later.</span></li>
-            <li className="flex gap-2"><span className="font-semibold text-primary shrink-0">5.</span>Mark anything incomplete as <strong className="text-yellow-400">beta</strong> in your README.</li>
+          <ol className="space-y-3 text-sm text-white/60 list-none">
+            <li className="pl-0"><span className="font-semibold text-primary">1. </span>Submit a <strong className="text-white/80">public GitHub link</strong> with a proper README (team name, roles, key info).</li>
+            <li className="pl-0"><span className="font-semibold text-primary">2. </span>Submit a <strong className="text-white/80">public deployment link</strong> where your project is live.</li>
+            <li className="pl-0"><span className="font-semibold text-primary">3. </span>Upload your <strong className="text-white/80">PPT as PDF</strong> (max 10MB).</li>
+            <li className="pl-0"><span className="font-semibold text-primary">4. </span>Your <strong className="text-white/80">team lead name</strong> will appear on the certificate — double-check before submitting. <span className="text-yellow-400">No changes later.</span></li>
+            <li className="pl-0"><span className="font-semibold text-primary">5. </span>Mark anything incomplete as <strong className="text-yellow-400">beta</strong> in your README.</li>
           </ol>
         </div>
 
@@ -209,7 +209,7 @@ function SubmissionPage() {
             <p className="mb-5 text-sm text-white/50">Your feedback matters to us! It helps us make Vibeathon even better next time.</p>
             <div className="space-y-5">
               <div>
-                <label className={labelCls}>Share your Google Review *</label>
+                <label className={labelCls}>Share your feedback (Google Review) *</label>
                 <a
                   href="https://g.page/r/CaZ6E1PLfaKgEBM/review"
                   target="_blank"
