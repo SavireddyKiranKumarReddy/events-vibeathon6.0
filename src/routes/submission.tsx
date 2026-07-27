@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { submitFinalProject, uploadFile } from "@/lib/api.submission";
+import { submitFinalProject, createSignedUploadUrl, getPublicUrl } from "@/lib/api.submission";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
   Star, ExternalLink, FileText, ImageIcon, Loader2,
@@ -27,7 +27,8 @@ function SubmissionPage() {
   const submitFn = useServerFn(submitFinalProject);
   const pptRef = useRef<HTMLInputElement>(null);
   const feedbackRef = useRef<HTMLInputElement>(null);
-  const uploadFn = useServerFn(uploadFile);
+  const signedUrlFn = useServerFn(createSignedUploadUrl);
+  const publicUrlFn = useServerFn(getPublicUrl);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [pptState, setPptState] = useState<"idle" | "validating" | "uploading" | "done" | "error">("idle");
@@ -67,14 +68,14 @@ function SubmissionPage() {
     setPptState("validating");
     setError("");
 
-    if (file.type !== "application/pdf") {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
       setError(`"${file.name}" is not a PDF file. Only PDF files are accepted for PPT.`);
       setPptState("error");
       if (pptRef.current) pptRef.current.value = "";
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 10MB.`);
+    if (file.size > 50 * 1024 * 1024) {
+      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 50MB.`);
       setPptState("error");
       if (pptRef.current) pptRef.current.value = "";
       return;
@@ -85,10 +86,15 @@ function SubmissionPage() {
     setPptState("uploading");
 
     try {
-      const base64 = await fileToBase64(file);
-      const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: "application/pdf", folder: "ppt" } });
-      if (!result || !result.url) throw new Error("Upload returned no URL");
-      update("pptUrl", result.url);
+      const { signedUrl, path, token } = await signedUrlFn({ data: { fileName: file.name, folder: "ppt" } });
+      const resp = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        body: file,
+      });
+      if (!resp.ok) throw new Error("Direct upload failed (" + resp.status + ")");
+      const { url } = await publicUrlFn({ data: { path } });
+      update("pptUrl", url);
       setPptState("done");
     } catch (err: any) {
       console.error("PPT upload error:", err);
@@ -132,12 +138,19 @@ function SubmissionPage() {
     setFeedbackState("uploading");
 
     try {
-      const base64 = await fileToBase64(file);
-      const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: file.type, folder: "feedback" } });
-      update("feedbackScreenshotUrl", result.url);
+      const { signedUrl, path } = await signedUrlFn({ data: { fileName: file.name, folder: "feedback" } });
+      const resp = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!resp.ok) throw new Error("Direct upload failed (" + resp.status + ")");
+      const { url } = await publicUrlFn({ data: { path } });
+      update("feedbackScreenshotUrl", url);
       setFeedbackState("done");
-    } catch {
-      setError("Screenshot upload failed. Please try again.");
+    } catch (err: any) {
+      console.error("Feedback upload error:", err);
+      setError("Screenshot upload failed. Please try again. (" + (err?.message || "unknown") + ")");
       setFeedbackState("error");
       setFeedbackName("");
       setFeedbackSize("");
@@ -190,7 +203,7 @@ function SubmissionPage() {
           <ol className="space-y-3 text-sm text-white/60 list-none">
             <li className="pl-0"><span className="font-semibold text-primary">1. </span>Submit a <strong className="text-white/80">public GitHub link</strong> with a proper README (team name, roles, key info).</li>
             <li className="pl-0"><span className="font-semibold text-primary">2. </span>Submit a <strong className="text-white/80">public deployment link</strong> where your project is live.</li>
-            <li className="pl-0"><span className="font-semibold text-primary">3. </span>Upload your <strong className="text-white/80">PPT as PDF</strong> (max 10MB).</li>
+            <li className="pl-0"><span className="font-semibold text-primary">3. </span>Upload your <strong className="text-white/80">PPT as PDF</strong> (max 50MB).</li>
             <li className="pl-0"><span className="font-semibold text-primary">4. </span>The name you enter as <strong className="text-white/80">Team Lead Name</strong> will appear on your certificate — double-check before submitting. <span className="text-yellow-400">No modifications will be done later.</span></li>
             <li className="pl-0"><span className="font-semibold text-primary">5. </span>Mark anything incomplete as <strong className="text-yellow-400">beta</strong> in your README.</li>
           </ol>
@@ -229,7 +242,7 @@ function SubmissionPage() {
               <div><label className={labelCls}>GitHub Repository URL *</label><input type="url" className={inputCls} placeholder="https://github.com/username/repo" value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} /></div>
               <div><label className={labelCls}>Deployment URL *</label><input type="url" className={inputCls} placeholder="https://your-project.vercel.app" value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} /></div>
               <div>
-                <label className={labelCls}>PPT (PDF only, max 10MB) *</label>
+                <label className={labelCls}>PPT (PDF only, max 50MB) *</label>
                 <input type="file" ref={pptRef} accept=".pdf" className="hidden" onChange={handlePpt} />
 
                 {pptState === "done" && form.pptUrl ? (
@@ -271,7 +284,7 @@ function SubmissionPage() {
                     ) : (
                       <>
                         <Upload className="h-4 w-4" />
-                        <span>Click to upload your PPT (PDF only, max 10MB)</span>
+                        <span>Click to upload your PPT (PDF only, max 50MB)</span>
                       </>
                     )}
                   </button>

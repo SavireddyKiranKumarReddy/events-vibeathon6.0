@@ -2,27 +2,36 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// ---- Upload file to storage (server-side, uses service role) ----
-export const uploadFile = createServerFn({ method: "POST" })
+// ---- Create signed upload URL (tiny payload, no body size limit) ----
+export const createSignedUploadUrl = createServerFn({ method: "POST" })
   .validator(
-    (d: { fileBase64: string; fileName: string; contentType: string; folder: string }) =>
+    (d: { fileName: string; folder: string }) =>
       z
         .object({
-          fileBase64: z.string().min(1),
           fileName: z.string().min(1),
-          contentType: z.string().min(1),
           folder: z.string().min(1),
         })
         .parse(d)
   )
   .handler(async ({ data }) => {
-    const buffer = Buffer.from(data.fileBase64, "base64");
     const path = `${data.folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.fileName}`;
-    const { error } = await supabaseAdmin.storage
+    const { data: signedData, error } = await supabaseAdmin.storage
       .from("event-submissions")
-      .upload(path, buffer, { contentType: data.contentType });
-    if (error) throw new Error("File upload failed: " + error.message);
-    const { data: urlData } = supabaseAdmin.storage.from("event-submissions").getPublicUrl(path);
+      .createSignedUploadUrl(path);
+    if (error) throw new Error("Failed to create upload URL: " + error.message);
+    return { signedUrl: signedData.signedUrl, path, token: signedData.token };
+  });
+
+// ---- Confirm upload and get public URL ----
+export const getPublicUrl = createServerFn({ method: "POST" })
+  .validator(
+    (d: { path: string }) =>
+      z.object({ path: z.string().min(1) }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const { data: urlData } = supabaseAdmin.storage
+      .from("event-submissions")
+      .getPublicUrl(data.path);
     return { url: urlData.publicUrl };
   });
 
@@ -52,6 +61,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
           teamName: z.string().min(1),
           teamLeadName: z.string().min(1),
           teamLeadContact: z.string().min(1),
+          teamLeadEmail: z.string().email(),
           teammate1: z.string().default(""),
           teammate2: z.string().default(""),
           teammate3: z.string().default(""),
