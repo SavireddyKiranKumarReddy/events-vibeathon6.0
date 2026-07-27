@@ -9,7 +9,6 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       teamLeadName: string;
       teamLeadContact: string;
       teamLeadEmail: string;
-      certificateName: string;
       teammate1: string;
       teammate2: string;
       teammate3: string;
@@ -28,7 +27,6 @@ export const submitFinalProject = createServerFn({ method: "POST" })
           teamLeadName: z.string().min(1),
           teamLeadContact: z.string().min(1),
           teamLeadEmail: z.string().email(),
-          certificateName: z.string().min(1),
           teammate1: z.string().default(""),
           teammate2: z.string().default(""),
           teammate3: z.string().default(""),
@@ -38,8 +36,8 @@ export const submitFinalProject = createServerFn({ method: "POST" })
           phasesCompleted: z.number().min(1).max(5),
           projectSummary: z.string().min(1).max(500),
           projectUniqueness: z.string().min(1).max(500),
-          eventExperience: z.string().default(""),
-          feedbackScreenshotUrl: z.string().default(""),
+          eventExperience: z.string().min(1, "Please share your experience"),
+          feedbackScreenshotUrl: z.string().min(1, "Please upload your feedback screenshot"),
           videoLink: z.string().default(""),
         })
         .parse(d)
@@ -49,7 +47,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       team_lead_name: data.teamLeadName,
       team_lead_contact: data.teamLeadContact,
       team_lead_email: data.teamLeadEmail,
-      certificate_name: data.certificateName,
+      certificate_name: data.teamLeadName,
       teammate_1: data.teammate1,
       teammate_2: data.teammate2,
       teammate_3: data.teammate3,
