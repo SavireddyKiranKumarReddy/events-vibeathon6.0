@@ -2,11 +2,12 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { getFinalSubmissions, updateRoundStatus, updateSubmissionField } from "@/lib/api.submission";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Shield, Filter, CheckCircle2, XCircle, Clock, ExternalLink, Github, Globe, Users,
-  ChevronDown, Search, Save, Pencil, Video, MessageSquare, Star,
+  ChevronDown, Search, Save, Pencil, Video, MessageSquare, Star, Download,
 } from "lucide-react";
 
 const ADMIN_EMAIL = "kiransavireddy@gmail.com";
@@ -165,6 +166,44 @@ function FormAdminPage() {
             {ROUND_OPTIONS.map((r) => (<option key={r} value={r}>{r.replace("_", " ").toUpperCase()}</option>))}
           </select>
           <span className="text-xs text-white/40">Showing {filtered.length} of {subs.length}</span>
+          <button onClick={() => {
+            const rows = filtered.map((s: any) => ({
+              "Team Name": s.team_name,
+              "Team Lead": s.team_lead_name,
+              "Certificate Name": s.certificate_name,
+              "Email": s.team_lead_email,
+              "Contact": s.team_lead_contact,
+              "Teammate 1": s.teammate_1,
+              "Teammate 2": s.teammate_2,
+              "Teammate 3": s.teammate_3,
+              "GitHub URL": s.github_url,
+              "Deployment URL": s.deployment_url,
+              "PPT URL": s.ppt_url,
+              "Video Link": s.video_link,
+              "Phases": s.phases_completed,
+              "Round Status": s.round_status,
+              "Admin Notes": s.admin_notes,
+              "Project Summary": s.project_summary,
+              "Uniqueness": s.project_uniqueness,
+              "Event Experience": s.event_experience,
+              "Feedback Screenshot URL": s.feedback_screenshot_url,
+              "Created At": s.created_at,
+            }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(rows);
+            ws["!cols"] = [
+              { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 30 },
+              { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 },
+              { wch: 35 }, { wch: 35 }, { wch: 50 }, { wch: 35 },
+              { wch: 8 }, { wch: 12 }, { wch: 30 }, { wch: 50 },
+              { wch: 50 }, { wch: 50 }, { wch: 50 }, { wch: 25 },
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, "Submissions");
+            XLSX.writeFile(wb, `vibeathon-submissions-${new Date().toISOString().slice(0, 10)}.xlsx`);
+          }} className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition ml-auto cursor-pointer">
+            <Download className="h-3.5 w-3.5" />
+            Export Excel
+          </button>
         </div>
 
         {isLoading ? (
