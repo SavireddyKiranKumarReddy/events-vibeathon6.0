@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { submitFinalProject, createSignedUploadUrl, getPublicUrl } from "@/lib/api.submission";
+import { submitFinalProject, createSignedUploadUrl, getPublicUrl, uploadFileServer } from "@/lib/api.submission";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
   Star, ExternalLink, FileText, ImageIcon, Loader2,
@@ -23,18 +24,55 @@ function formatSize(bytes: number) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
+async function uploadFile(file: File, folder: string): Promise<string> {
+  const MAX_DIRECT = 3 * 1024 * 1024;
+  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`;
+
+  if (file.size <= MAX_DIRECT) {
+    try {
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("event-submissions")
+        .createSignedUploadUrl(path);
+      if (signErr) throw new Error(signErr.message);
+
+      const { error: upErr } = await supabase.storage
+        .from("event-submissions")
+        .uploadToSignedUrl(path, signed.token, file);
+      if (upErr) throw new Error(upErr.message);
+
+      const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(path);
+      return urlData.publicUrl;
+    } catch (e) {
+      console.warn("uploadToSignedUrl failed, trying server fallback:", e);
+    }
+  }
+
+  const fileToBase64 = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  const base64 = await fileToBase64(file);
+  const result = await uploadFileServer({
+    data: { fileBase64: base64, fileName: file.name, contentType: file.type || "application/octet-stream", folder },
+  });
+  return result.url;
+}
+
 function SubmissionPage() {
   const submitFn = useServerFn(submitFinalProject);
   const pptRef = useRef<HTMLInputElement>(null);
   const feedbackRef = useRef<HTMLInputElement>(null);
-  const signedUrlFn = useServerFn(createSignedUploadUrl);
-  const publicUrlFn = useServerFn(getPublicUrl);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [pptState, setPptState] = useState<"idle" | "validating" | "uploading" | "done" | "error">("idle");
+  const [pptState, setPptState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [pptName, setPptName] = useState("");
   const [pptSize, setPptSize] = useState("");
-  const [feedbackState, setFeedbackState] = useState<"idle" | "validating" | "uploading" | "done" | "error">("idle");
+  const [feedbackState, setFeedbackState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [feedbackName, setFeedbackName] = useState("");
   const [feedbackSize, setFeedbackSize] = useState("");
   const [form, setForm] = useState({
@@ -48,35 +86,18 @@ function SubmissionPage() {
 
   const update = (f: string, v: string | number) => setForm(p => ({ ...p, [f]: v }));
 
-  async function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   async function handlePpt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setPptState("validating");
     setError("");
-
     if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setError(`"${file.name}" is not a PDF file. Only PDF files are accepted for PPT.`);
-      setPptState("error");
+      setError(`"${file.name}" is not a PDF file.`);
       if (pptRef.current) pptRef.current.value = "";
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 50MB.`);
-      setPptState("error");
+      setError(`File is ${formatSize(file.size)}. Max 50MB.`);
       if (pptRef.current) pptRef.current.value = "";
       return;
     }
@@ -86,19 +107,12 @@ function SubmissionPage() {
     setPptState("uploading");
 
     try {
-      const { signedUrl, path, token } = await signedUrlFn({ data: { fileName: file.name, folder: "ppt" } });
-      const resp = await fetch(signedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/pdf" },
-        body: file,
-      });
-      if (!resp.ok) throw new Error("Direct upload failed (" + resp.status + ")");
-      const { url } = await publicUrlFn({ data: { path } });
+      const url = await uploadFile(file, "ppt");
       update("pptUrl", url);
       setPptState("done");
     } catch (err: any) {
       console.error("PPT upload error:", err);
-      setError("PPT upload failed. Please try again. (" + (err?.message || "unknown") + ")");
+      setError("PPT upload failed. " + (err?.message || "Please try again."));
       setPptState("error");
       setPptName("");
       setPptSize("");
@@ -117,18 +131,14 @@ function SubmissionPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setFeedbackState("validating");
     setError("");
-
     if (!file.type.startsWith("image/")) {
-      setError(`"${file.name}" is not an image file. Please upload a JPG, PNG, or similar image.`);
-      setFeedbackState("error");
+      setError(`"${file.name}" is not an image file.`);
       if (feedbackRef.current) feedbackRef.current.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError(`File is ${formatSize(file.size)}. Maximum allowed size is 5MB.`);
-      setFeedbackState("error");
+      setError(`File is ${formatSize(file.size)}. Max 5MB.`);
       if (feedbackRef.current) feedbackRef.current.value = "";
       return;
     }
@@ -138,19 +148,12 @@ function SubmissionPage() {
     setFeedbackState("uploading");
 
     try {
-      const { signedUrl, path } = await signedUrlFn({ data: { fileName: file.name, folder: "feedback" } });
-      const resp = await fetch(signedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!resp.ok) throw new Error("Direct upload failed (" + resp.status + ")");
-      const { url } = await publicUrlFn({ data: { path } });
+      const url = await uploadFile(file, "feedback");
       update("feedbackScreenshotUrl", url);
       setFeedbackState("done");
     } catch (err: any) {
       console.error("Feedback upload error:", err);
-      setError("Screenshot upload failed. Please try again. (" + (err?.message || "unknown") + ")");
+      setError("Screenshot upload failed. " + (err?.message || "Please try again."));
       setFeedbackState("error");
       setFeedbackName("");
       setFeedbackSize("");
@@ -262,19 +265,19 @@ function SubmissionPage() {
                   <button
                     type="button"
                     onClick={() => pptRef.current?.click()}
-                    disabled={pptState === "uploading" || pptState === "validating"}
+                    disabled={pptState === "uploading"}
                     className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition-all disabled:opacity-50 ${
                       pptState === "error"
                         ? "border-red-500/40 bg-red-500/5 text-red-400"
-                        : pptState === "uploading" || pptState === "validating"
+                        : pptState === "uploading"
                           ? "border-primary/40 bg-primary/5 text-primary"
                           : "border-white/20 bg-white/5 text-white/40 hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60"
                     }`}
                   >
-                    {pptState === "uploading" || pptState === "validating" ? (
+                    {pptState === "uploading" ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{pptState === "validating" ? "Validating file..." : "Uploading to server..."}</span>
+                        <span>Uploading...</span>
                       </>
                     ) : pptState === "error" ? (
                       <>
@@ -373,19 +376,19 @@ function SubmissionPage() {
                   <button
                     type="button"
                     onClick={() => feedbackRef.current?.click()}
-                    disabled={feedbackState === "uploading" || feedbackState === "validating"}
+                    disabled={feedbackState === "uploading"}
                     className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition-all disabled:opacity-50 ${
                       feedbackState === "error"
                         ? "border-red-500/40 bg-red-500/5 text-red-400"
-                        : feedbackState === "uploading" || feedbackState === "validating"
+                        : feedbackState === "uploading"
                           ? "border-primary/40 bg-primary/5 text-primary"
                           : "border-white/20 bg-white/5 text-white/40 hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60"
                     }`}
                   >
-                    {feedbackState === "uploading" || feedbackState === "validating" ? (
+                    {feedbackState === "uploading" ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{feedbackState === "validating" ? "Validating file..." : "Uploading to server..."}</span>
+                        <span>Uploading...</span>
                       </>
                     ) : feedbackState === "error" ? (
                       <>

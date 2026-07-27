@@ -14,7 +14,7 @@ export const createSignedUploadUrl = createServerFn({ method: "POST" })
         .parse(d)
   )
   .handler(async ({ data }) => {
-    const path = `${data.folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.fileName}`;
+    const path = `${data.folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const { data: signedData, error } = await supabaseAdmin.storage
       .from("event-submissions")
       .createSignedUploadUrl(path);
@@ -22,7 +22,31 @@ export const createSignedUploadUrl = createServerFn({ method: "POST" })
     return { signedUrl: signedData.signedUrl, path, token: signedData.token };
   });
 
-// ---- Confirm upload and get public URL ----
+// ---- Server-side upload fallback (for small files via base64) ----
+export const uploadFileServer = createServerFn({ method: "POST" })
+  .validator(
+    (d: { fileBase64: string; fileName: string; contentType: string; folder: string }) =>
+      z
+        .object({
+          fileBase64: z.string().min(1),
+          fileName: z.string().min(1),
+          contentType: z.string().min(1),
+          folder: z.string().min(1),
+        })
+        .parse(d)
+  )
+  .handler(async ({ data }) => {
+    const buffer = Buffer.from(data.fileBase64, "base64");
+    const path = `${data.folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error } = await supabaseAdmin.storage
+      .from("event-submissions")
+      .upload(path, buffer, { contentType: data.contentType, upsert: false });
+    if (error) throw new Error("File upload failed: " + error.message);
+    const { data: urlData } = supabaseAdmin.storage.from("event-submissions").getPublicUrl(path);
+    return { url: urlData.publicUrl };
+  });
+
+// ---- Get public URL from path ----
 export const getPublicUrl = createServerFn({ method: "POST" })
   .validator(
     (d: { path: string }) =>
