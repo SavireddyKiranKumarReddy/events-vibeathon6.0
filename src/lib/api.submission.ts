@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const submitFinalProject = createServerFn({ method: "POST" })
   .validator(
     (d: {
+      teamName: string;
       teamLeadName: string;
       teamLeadContact: string;
       teamLeadEmail: string;
@@ -24,6 +25,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
     }) =>
       z
         .object({
+          teamName: z.string().min(1),
           teamLeadName: z.string().min(1),
           teamLeadContact: z.string().min(1),
           teamLeadEmail: z.string().email(),
@@ -44,6 +46,7 @@ export const submitFinalProject = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("final_submissions").insert({
+      team_name: data.teamName,
       team_lead_name: data.teamLeadName,
       team_lead_contact: data.teamLeadContact,
       team_lead_email: data.teamLeadEmail,
@@ -93,7 +96,7 @@ export const updateSubmissionField = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const allowed = [
-      "team_lead_name", "team_lead_contact", "team_lead_email", "certificate_name",
+      "team_name", "team_lead_name", "team_lead_contact", "team_lead_email", "certificate_name",
       "teammate_1", "teammate_2", "teammate_3",
       "github_url", "deployment_url", "ppt_url",
       "phases_completed", "project_summary", "project_uniqueness",

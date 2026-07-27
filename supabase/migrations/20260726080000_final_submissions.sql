@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS public.final_submissions (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  team_name text DEFAULT '',
   team_lead_name text NOT NULL,
   team_lead_contact text NOT NULL,
   team_lead_email text NOT NULL UNIQUE,

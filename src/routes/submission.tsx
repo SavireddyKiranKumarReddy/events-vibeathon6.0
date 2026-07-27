@@ -6,7 +6,7 @@ import { submitFinalProject } from "@/lib/api.submission";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
-  MessageSquare, Play, Star, ExternalLink,
+  MessageSquare, Star, ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/submission")({
@@ -29,7 +29,7 @@ function SubmissionPage() {
   const [pptName, setPptName] = useState("");
   const [feedbackName, setFeedbackName] = useState("");
   const [form, setForm] = useState({
-    teamLeadName: "", teamLeadContact: "", teamLeadEmail: "",
+    teamName: "", teamLeadName: "", teamLeadContact: "", teamLeadEmail: "",
     teammate1: "", teammate2: "", teammate3: "",
     githubUrl: "", deploymentUrl: "", pptUrl: "", videoLink: "",
     phasesCompleted: 0,
@@ -74,7 +74,7 @@ function SubmissionPage() {
     onError: (e: any) => setError(e.message || "Submission failed. Please try again."),
   });
 
-  const canSubmit = form.teamLeadName && form.teamLeadContact && form.teamLeadEmail
+  const canSubmit = form.teamName && form.teamLeadName && form.teamLeadContact && form.teamLeadEmail
     && form.githubUrl && form.deploymentUrl && form.pptUrl && form.phasesCompleted > 0
     && form.projectSummary && form.projectUniqueness
     && form.eventExperience && form.feedbackScreenshotUrl;
@@ -87,7 +87,7 @@ function SubmissionPage() {
         </div>
         <h1 className="text-3xl font-bold text-white">You're all set!</h1>
         <p className="mt-4 text-base text-white/60">Your submission has been recorded successfully. We'll review it soon — best of luck!</p>
-        <p className="mt-3 text-sm text-white/40">{form.teamLeadName}</p>
+        <p className="mt-3 text-sm text-white/40">{form.teamName} — {form.teamLeadName}</p>
       </div>
     </div>
   );
@@ -96,11 +96,10 @@ function SubmissionPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] text-white">
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-10 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Play className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold">Vibeathon 6.0</h1>
-          <p className="mt-2 text-base text-white/50">Final Project Submission</p>
+          <h1 className="text-xl font-bold text-white/40 tracking-widest uppercase">NXTGENSEC (NEXT GENERATION SECURITY)</h1>
+          <p className="mt-1 text-sm text-white/30 italic">Securing Digital Assets</p>
+          <h2 className="mt-4 text-3xl font-bold text-white">Vibeathon 6.0</h2>
+          <p className="mt-1 text-base text-white/50">Vibecoding Hackathon — Final Project Submission</p>
         </div>
 
         <div className="glass mb-8 p-6">
@@ -109,7 +108,7 @@ function SubmissionPage() {
             <li className="pl-0"><span className="font-semibold text-primary">1. </span>Submit a <strong className="text-white/80">public GitHub link</strong> with a proper README (team name, roles, key info).</li>
             <li className="pl-0"><span className="font-semibold text-primary">2. </span>Submit a <strong className="text-white/80">public deployment link</strong> where your project is live.</li>
             <li className="pl-0"><span className="font-semibold text-primary">3. </span>Upload your <strong className="text-white/80">PPT as PDF</strong> (max 10MB).</li>
-            <li className="pl-0"><span className="font-semibold text-primary">4. </span>Your <strong className="text-white/80">team lead name</strong> will appear on the certificate — double-check before submitting. <span className="text-yellow-400">No changes later.</span></li>
+            <li className="pl-0"><span className="font-semibold text-primary">4. </span>The name you enter as <strong className="text-white/80">Team Lead Name</strong> will appear on your certificate — double-check before submitting. <span className="text-yellow-400">No modifications will be done later.</span></li>
             <li className="pl-0"><span className="font-semibold text-primary">5. </span>Mark anything incomplete as <strong className="text-yellow-400">beta</strong> in your README.</li>
           </ol>
         </div>
@@ -121,6 +120,7 @@ function SubmissionPage() {
           <div className="glass p-6">
             <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Users className="h-5 w-5 text-primary" /> Your Details</h2>
             <div className="space-y-4">
+              <div><label className={labelCls}>Team Name *</label><input type="text" className={inputCls} placeholder="Your team name" value={form.teamName} onChange={e => update("teamName", e.target.value)} /></div>
               <div>
                 <label className={labelCls}>Team Lead Name *</label>
                 <p className="mb-1.5 text-xs text-white/30">This name will appear on your certificate — make sure it's correct!</p>

@@ -96,7 +96,7 @@ function FormAdminPage() {
       if (filterRound !== "all" && s.round_status !== filterRound) return false;
       if (search) {
         const q = search.toLowerCase();
-        const searchable = `${s.team_lead_name} ${s.certificate_name} ${s.teammate_1} ${s.teammate_2} ${s.teammate_3} ${s.team_lead_email}`.toLowerCase();
+        const searchable = `${s.team_name} ${s.team_lead_name} ${s.certificate_name} ${s.teammate_1} ${s.teammate_2} ${s.teammate_3} ${s.team_lead_email}`.toLowerCase();
         if (!searchable.includes(q)) return false;
       }
       return true;
@@ -206,6 +206,7 @@ function FormAdminPage() {
                     <div className="border-t border-white/10 p-4 space-y-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-3">
+                          <EditableField label="Team Name" value={s.team_name || ""} id={s.id} field="team_name" inputFn={fieldMutation.mutate} />
                           <EditableField label="Team Lead Name" value={s.team_lead_name} id={s.id} field="team_lead_name" inputFn={fieldMutation.mutate} />
                           <EditableField label="Contact" value={s.team_lead_contact} id={s.id} field="team_lead_contact" inputFn={fieldMutation.mutate} />
                           <EditableField label="Email" value={s.team_lead_email} id={s.id} field="team_lead_email" inputFn={fieldMutation.mutate} />
