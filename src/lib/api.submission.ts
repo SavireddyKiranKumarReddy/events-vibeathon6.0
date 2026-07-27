@@ -2,6 +2,30 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+// ---- Upload file to storage (server-side, uses service role) ----
+export const uploadFile = createServerFn({ method: "POST" })
+  .validator(
+    (d: { fileBase64: string; fileName: string; contentType: string; folder: string }) =>
+      z
+        .object({
+          fileBase64: z.string().min(1),
+          fileName: z.string().min(1),
+          contentType: z.string().min(1),
+          folder: z.string().min(1),
+        })
+        .parse(d)
+  )
+  .handler(async ({ data }) => {
+    const buffer = Buffer.from(data.fileBase64, "base64");
+    const path = `${data.folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.fileName}`;
+    const { error } = await supabaseAdmin.storage
+      .from("event-submissions")
+      .upload(path, buffer, { contentType: data.contentType });
+    if (error) throw new Error("File upload failed: " + error.message);
+    const { data: urlData } = supabaseAdmin.storage.from("event-submissions").getPublicUrl(path);
+    return { url: urlData.publicUrl };
+  });
+
 // ---- Submit final project ----
 export const submitFinalProject = createServerFn({ method: "POST" })
   .validator(

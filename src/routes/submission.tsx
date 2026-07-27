@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { submitFinalProject } from "@/lib/api.submission";
-import { supabase } from "@/integrations/supabase/client";
+import { submitFinalProject, uploadFile } from "@/lib/api.submission";
 import {
   CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
   MessageSquare, Star, ExternalLink,
@@ -22,6 +21,7 @@ function SubmissionPage() {
   const submitFn = useServerFn(submitFinalProject);
   const pptRef = useRef<HTMLInputElement>(null);
   const feedbackRef = useRef<HTMLInputElement>(null);
+  const uploadFn = useServerFn(uploadFile);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [uploadingPpt, setUploadingPpt] = useState(false);
@@ -39,17 +39,32 @@ function SubmissionPage() {
 
   const update = (f: string, v: string | number) => setForm(p => ({ ...p, [f]: v }));
 
+  async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handlePpt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") { setError("Please upload your PPT as a PDF file."); return; }
     if (file.size > 10 * 1024 * 1024) { setError("File size must be under 10MB."); return; }
     setUploadingPpt(true); setError(""); setPptName(file.name);
-    const path = `ppt/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.pdf`;
-    const { data, error: upErr } = await supabase.storage.from("event-submissions").upload(path, file, { contentType: "application/pdf" });
-    if (upErr) { setError("Upload failed. Please try again."); setUploadingPpt(false); return; }
-    const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(data.path);
-    update("pptUrl", urlData.publicUrl);
+    try {
+      const base64 = await fileToBase64(file);
+      const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: "application/pdf", folder: "ppt" } });
+      update("pptUrl", result.url);
+    } catch {
+      setError("Upload failed. Please try again.");
+    }
     setUploadingPpt(false);
   }
 
@@ -59,12 +74,13 @@ function SubmissionPage() {
     if (!file.type.startsWith("image/")) { setError("Please upload an image file (JPG, PNG, etc.)."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("Screenshot must be under 5MB."); return; }
     setUploadingFeedback(true); setError(""); setFeedbackName(file.name);
-    const ext = file.name.split(".").pop() || "png";
-    const path = `feedback/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { data, error: upErr } = await supabase.storage.from("event-submissions").upload(path, file, { contentType: file.type });
-    if (upErr) { setError("Upload failed. Please try again."); setUploadingFeedback(false); return; }
-    const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(data.path);
-    update("feedbackScreenshotUrl", urlData.publicUrl);
+    try {
+      const base64 = await fileToBase64(file);
+      const result = await uploadFn({ data: { fileBase64: base64, fileName: file.name, contentType: file.type, folder: "feedback" } });
+      update("feedbackScreenshotUrl", result.url);
+    } catch {
+      setError("Upload failed. Please try again.");
+    }
     setUploadingFeedback(false);
   }
 
