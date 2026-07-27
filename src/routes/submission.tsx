@@ -158,10 +158,7 @@ function SubmissionPage() {
     onError: (e: any) => setError(e.message || "Submission failed. Please try again."),
   });
 
-  const canSubmit = form.teamName && form.teamLeadName && form.teamLeadContact && form.teamLeadEmail
-    && form.githubUrl && form.deploymentUrl && form.pptUrl && form.phasesCompleted > 0
-    && form.projectSummary && form.projectUniqueness
-    && form.eventExperience && form.feedbackScreenshotUrl;
+  const canSubmit = form.teamName && form.teamLeadName && form.teamLeadEmail;
 
   if (submitted) return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
@@ -210,7 +207,7 @@ function SubmissionPage() {
                 <p className="mb-1.5 text-xs text-white/30">This name will appear on your certificate — make sure it's correct!</p>
                 <input type="text" className={inputCls} placeholder="Enter your full name" value={form.teamLeadName} onChange={e => update("teamLeadName", e.target.value)} />
               </div>
-              <div><label className={labelCls}>Contact Number *</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
+              <div><label className={labelCls}>Contact Number</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
               <div><label className={labelCls}>Email *</label><input type="email" className={inputCls} placeholder="you@example.com" value={form.teamLeadEmail} onChange={e => update("teamLeadEmail", e.target.value)} /></div>
             </div>
           </div>
@@ -227,10 +224,10 @@ function SubmissionPage() {
           <div className="glass p-6">
             <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Github className="h-5 w-5 text-primary" /> Project Links</h2>
             <div className="space-y-4">
-              <div><label className={labelCls}>GitHub Repository URL *</label><input type="url" className={inputCls} placeholder="https://github.com/username/repo" value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} /></div>
-              <div><label className={labelCls}>Deployment URL *</label><input type="url" className={inputCls} placeholder="https://your-project.vercel.app" value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} /></div>
+              <div><label className={labelCls}>GitHub Repository URL</label><input type="url" className={inputCls} placeholder="https://github.com/username/repo" value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} /></div>
+              <div><label className={labelCls}>Deployment URL</label><input type="url" className={inputCls} placeholder="https://your-project.vercel.app" value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} /></div>
               <div>
-                <label className={labelCls}>PPT (PDF only, max 10MB) *</label>
+                <label className={labelCls}>PPT (PDF only, max 10MB)</label>
                 <input type="file" ref={pptRef} accept=".pdf" className="hidden" onChange={handlePpt} />
 
                 {pptState === "done" && form.pptUrl ? (
@@ -286,7 +283,7 @@ function SubmissionPage() {
           </div>
 
           <div className="glass p-6">
-            <h2 className="mb-2 text-lg font-semibold text-white">Phases Completed *</h2>
+            <h2 className="mb-2 text-lg font-semibold text-white">Phases Completed</h2>
             <p className="mb-4 text-sm text-white/50">How many phases of your problem statement did you complete?</p>
             <div className="grid grid-cols-5 gap-3">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -304,19 +301,19 @@ function SubmissionPage() {
                 </button>
               ))}
             </div>
-            {form.phasesCompleted === 0 && <p className="mt-3 text-xs text-yellow-400/80">Please select a number above to continue.</p>}
+            {form.phasesCompleted === 0 && <p className="mt-3 text-xs text-white/30">Select the number of phases you completed.</p>}
           </div>
 
           <div className="glass p-6">
             <h2 className="mb-5 text-lg font-semibold text-white">About Your Project</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelCls}>What does your project do? * <span className="text-xs text-white/30">(2-3 sentences)</span></label>
+                <label className={labelCls}>What does your project do? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
                 <textarea className={`${inputCls} resize-none`} rows={3} maxLength={500} placeholder="Tell us briefly what you built..." value={form.projectSummary} onChange={e => update("projectSummary", e.target.value)} />
                 <div className="mt-1 text-right text-xs text-white/30">{form.projectSummary.length}/500</div>
               </div>
               <div>
-                <label className={labelCls}>What makes it unique? * <span className="text-xs text-white/30">(2-3 sentences)</span></label>
+                <label className={labelCls}>What makes it unique? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
                 <textarea className={`${inputCls} resize-none`} rows={3} maxLength={500} placeholder="What's the one thing that makes your project stand out?" value={form.projectUniqueness} onChange={e => update("projectUniqueness", e.target.value)} />
                 <div className="mt-1 text-right text-xs text-white/30">{form.projectUniqueness.length}/500</div>
               </div>
@@ -328,7 +325,7 @@ function SubmissionPage() {
             <p className="mb-5 text-sm text-white/50">Your feedback matters to us! It helps us make Vibeathon even better next time.</p>
             <div className="space-y-5">
               <div>
-                <label className={labelCls}>Share your feedback (Google Review) *</label>
+                <label className={labelCls}>Share your feedback (Google Review)</label>
                 <a
                   href="https://g.page/r/CaZ6E1PLfaKgEBM/review"
                   target="_blank"
@@ -341,7 +338,7 @@ function SubmissionPage() {
                 <p className="mt-2 text-xs text-white/30">Click the link above, write your review, then come back here to upload the screenshot.</p>
               </div>
               <div>
-                <label className={labelCls}>Upload screenshot of your review * <span className="text-xs text-white/30">(JPG/PNG, max 5MB)</span></label>
+                <label className={labelCls}>Upload screenshot of your review <span className="text-xs text-white/30">(JPG/PNG, max 5MB)</span></label>
                 <input type="file" ref={feedbackRef} accept="image/*" className="hidden" onChange={handleFeedback} />
 
                 {feedbackState === "done" && form.feedbackScreenshotUrl ? (
