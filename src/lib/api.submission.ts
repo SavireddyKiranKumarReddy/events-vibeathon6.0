@@ -19,6 +19,9 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       phasesCompleted: number;
       projectSummary: string;
       projectUniqueness: string;
+      eventExperience: string;
+      feedbackScreenshotUrl: string;
+      videoLink: string;
     }) =>
       z
         .object({
@@ -32,9 +35,12 @@ export const submitFinalProject = createServerFn({ method: "POST" })
           githubUrl: z.string().url(),
           deploymentUrl: z.string().url(),
           pptUrl: z.string().url(),
-          phasesCompleted: z.number().min(0).max(10),
+          phasesCompleted: z.number().min(1).max(5),
           projectSummary: z.string().min(1).max(500),
           projectUniqueness: z.string().min(1).max(500),
+          eventExperience: z.string().default(""),
+          feedbackScreenshotUrl: z.string().default(""),
+          videoLink: z.string().default(""),
         })
         .parse(d)
   )
@@ -53,6 +59,9 @@ export const submitFinalProject = createServerFn({ method: "POST" })
       phases_completed: data.phasesCompleted,
       project_summary: data.projectSummary,
       project_uniqueness: data.projectUniqueness,
+      event_experience: data.eventExperience,
+      feedback_screenshot_url: data.feedbackScreenshotUrl,
+      video_link: data.videoLink,
     });
     if (error) {
       if (error.code === "23505") throw new Error("A submission from this email already exists");
@@ -72,7 +81,43 @@ export const getFinalSubmissions = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-// ---- Update round status (admin) ----
+// ---- Update any field (admin) ----
+export const updateSubmissionField = createServerFn({ method: "POST" })
+  .validator(
+    (d: { id: string; field: string; value: string }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          field: z.string(),
+          value: z.string(),
+        })
+        .parse(d)
+  )
+  .handler(async ({ data }) => {
+    const allowed = [
+      "team_lead_name", "team_lead_contact", "team_lead_email", "certificate_name",
+      "teammate_1", "teammate_2", "teammate_3",
+      "github_url", "deployment_url", "ppt_url",
+      "phases_completed", "project_summary", "project_uniqueness",
+      "event_experience", "feedback_screenshot_url", "video_link",
+      "round_status", "admin_notes",
+    ];
+    if (!allowed.includes(data.field)) throw new Error("Invalid field");
+    const update: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (data.field === "phases_completed") {
+      update[data.field] = parseInt(data.value, 10);
+    } else {
+      update[data.field] = data.value;
+    }
+    const { error } = await supabaseAdmin
+      .from("final_submissions")
+      .update(update)
+      .eq("id", data.id);
+    if (error) throw new Error("Failed to update");
+    return { ok: true };
+  });
+
+// ---- Update round status + admin notes (admin) ----
 export const updateRoundStatus = createServerFn({ method: "POST" })
   .validator(
     (d: { id: string; roundStatus: string; adminNotes?: string }) =>

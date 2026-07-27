@@ -2,29 +2,18 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
-import { getFinalSubmissions, updateRoundStatus } from "@/lib/api.submission";
+import { getFinalSubmissions, updateRoundStatus, updateSubmissionField } from "@/lib/api.submission";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Shield,
-  Filter,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ExternalLink,
-  Github,
-  Globe,
-  Users,
-  ChevronDown,
-  Search,
+  Shield, Filter, CheckCircle2, XCircle, Clock, ExternalLink, Github, Globe, Users,
+  ChevronDown, Search, Save, Pencil, Video, MessageSquare, Star,
 } from "lucide-react";
 
 const ADMIN_EMAIL = "kiransavireddy@gmail.com";
 
 export const Route = createFileRoute("/_authenticated/form-admin")({
   ssr: false,
-  head: () => ({
-    meta: [{ title: "Form Admin — Vibeathon 6.0" }],
-  }),
+  head: () => ({ meta: [{ title: "Form Admin — Vibeathon 6.0" }] }),
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
@@ -36,10 +25,46 @@ export const Route = createFileRoute("/_authenticated/form-admin")({
 
 const ROUND_OPTIONS = ["submitted", "round_2", "round_3", "rejected"];
 
+function EditableField({ label, value, id, field, inputFn, isTextarea }: {
+  label: string; value: string; id: string; field: string;
+  inputFn: (p: { id: string; field: string; value: string }) => any;
+  isTextarea?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const mutate = useMutation({ mutationFn: inputFn });
+
+  if (!editing) return (
+    <div className="group">
+      <div className="text-xs text-white/40">{label}</div>
+      <div className="flex items-center gap-2 text-sm text-white/80">
+        <span className="flex-1 break-all">{value || "—"}</span>
+        <button onClick={() => { setDraft(value); setEditing(true); }} className="opacity-0 group-hover:opacity-100 transition"><Pencil className="h-3 w-3 text-white/30 hover:text-primary" /></button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="text-xs text-white/40">{label}</div>
+      <div className="flex items-center gap-2">
+        {isTextarea ? (
+          <textarea rows={3} value={draft} onChange={e => setDraft(e.target.value)} className="w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-primary resize-none" />
+        ) : (
+          <input type="text" value={draft} onChange={e => setDraft(e.target.value)} className="w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-primary" />
+        )}
+        <button onClick={() => { mutate.mutate({ id, field, value: draft }); setEditing(false); }} disabled={mutate.isPending} className="shrink-0 rounded bg-primary/20 p-1.5 text-primary hover:bg-primary/30 disabled:opacity-50"><Save className="h-3 w-3" /></button>
+        <button onClick={() => setEditing(false)} className="shrink-0 rounded bg-white/10 p-1.5 text-white/40 hover:bg-white/20"><XCircle className="h-3 w-3" /></button>
+      </div>
+    </div>
+  );
+}
+
 function FormAdminPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(getFinalSubmissions);
   const updateFn = useServerFn(updateRoundStatus);
+  const fieldFn = useServerFn(updateSubmissionField);
 
   const { data: submissions, isLoading } = useQuery({
     queryKey: ["final-submissions"],
@@ -48,8 +73,12 @@ function FormAdminPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (p: { id: string; roundStatus: string; adminNotes?: string }) =>
-      updateFn({ data: p }),
+    mutationFn: (p: { id: string; roundStatus: string; adminNotes?: string }) => updateFn({ data: p }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["final-submissions"] }),
+  });
+
+  const fieldMutation = useMutation({
+    mutationFn: (p: { id: string; field: string; value: string }) => fieldFn({ data: p }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["final-submissions"] }),
   });
 
@@ -83,8 +112,7 @@ function FormAdminPage() {
     return { total, round2, round3, rejected, avgPhases };
   }, [subs]);
 
-  const input =
-    "rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white text-sm placeholder-white/20 outline-none focus:border-primary";
+  const input = "rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white text-sm placeholder-white/20 outline-none focus:border-primary";
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -123,44 +151,20 @@ function FormAdminPage() {
         <div className="glass mb-6 flex flex-wrap items-center gap-3 p-4">
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-white/40" />
-            <input
-              type="text"
-              placeholder="Search team or name..."
-              className={`${input} w-48`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <input type="text" placeholder="Search team or name..." className={`${input} w-48`} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-white/40" />
-            <select
-              className={input}
-              value={filterPhases}
-              onChange={(e) => setFilterPhases(e.target.value)}
-            >
+            <select className={input} value={filterPhases} onChange={(e) => setFilterPhases(e.target.value)}>
               <option value="all">All Phases</option>
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <option key={n} value={n}>
-                  {n} phases
-                </option>
-              ))}
+              {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n} phases</option>))}
             </select>
           </div>
-          <select
-            className={input}
-            value={filterRound}
-            onChange={(e) => setFilterRound(e.target.value)}
-          >
+          <select className={input} value={filterRound} onChange={(e) => setFilterRound(e.target.value)}>
             <option value="all">All Rounds</option>
-            {ROUND_OPTIONS.map((r) => (
-              <option key={r} value={r}>
-                {r.replace("_", " ").toUpperCase()}
-              </option>
-            ))}
+            {ROUND_OPTIONS.map((r) => (<option key={r} value={r}>{r.replace("_", " ").toUpperCase()}</option>))}
           </select>
-          <span className="text-xs text-white/40">
-            Showing {filtered.length} of {subs.length}
-          </span>
+          <span className="text-xs text-white/40">Showing {filtered.length} of {subs.length}</span>
         </div>
 
         {isLoading ? (
@@ -172,20 +176,14 @@ function FormAdminPage() {
             {filtered.map((s: any) => {
               const expanded = expandedId === s.id;
               const roundColor =
-                s.round_status === "round_2"
-                  ? "text-blue-400 bg-blue-500/20 border-blue-500/30"
-                  : s.round_status === "round_3"
-                    ? "text-green-400 bg-green-500/20 border-green-500/30"
-                    : s.round_status === "rejected"
-                      ? "text-red-400 bg-red-500/20 border-red-500/30"
+                s.round_status === "round_2" ? "text-blue-400 bg-blue-500/20 border-blue-500/30"
+                  : s.round_status === "round_3" ? "text-green-400 bg-green-500/20 border-green-500/30"
+                    : s.round_status === "rejected" ? "text-red-400 bg-red-500/20 border-red-500/30"
                       : "text-white/50 bg-white/10 border-white/10";
 
               return (
                 <div key={s.id} className="glass overflow-hidden">
-                  <div
-                    className="flex cursor-pointer items-center justify-between p-4 transition hover:bg-white/5"
-                    onClick={() => setExpandedId(expanded ? null : s.id)}
-                  >
+                  <div className="flex cursor-pointer items-center justify-between p-4 transition hover:bg-white/5" onClick={() => setExpandedId(expanded ? null : s.id)}>
                     <div className="flex items-center gap-4">
                       <div className="min-w-[6ch] text-center">
                         <div className="text-xs text-white/40">Phases</div>
@@ -200,33 +198,27 @@ function FormAdminPage() {
                       <span className={`rounded-full border px-3 py-0.5 text-xs font-semibold ${roundColor}`}>
                         {s.round_status.replace("_", " ").toUpperCase()}
                       </span>
-                      <ChevronDown
-                        className={`h-4 w-4 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`}
-                      />
+                      <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${expanded ? "rotate-180" : ""}`} />
                     </div>
                   </div>
 
                   {expanded && (
-                    <div className="border-t border-white/10 p-4">
+                    <div className="border-t border-white/10 p-4 space-y-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-3">
-                          <div>
-                            <div className="text-xs text-white/40">Contact</div>
-                            <div className="text-sm text-white">{s.team_lead_contact}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-white/40">Certificate Name</div>
-                            <div className="text-sm text-white">{s.certificate_name}</div>
-                          </div>
+                          <EditableField label="Team Lead Name" value={s.team_lead_name} id={s.id} field="team_lead_name" inputFn={fieldMutation.mutate} />
+                          <EditableField label="Contact" value={s.team_lead_contact} id={s.id} field="team_lead_contact" inputFn={fieldMutation.mutate} />
+                          <EditableField label="Email" value={s.team_lead_email} id={s.id} field="team_lead_email" inputFn={fieldMutation.mutate} />
+                          <EditableField label="Certificate Name" value={s.certificate_name} id={s.id} field="certificate_name" inputFn={fieldMutation.mutate} />
                           <div>
                             <div className="text-xs text-white/40">Teammates</div>
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-white/80">
                               {[s.teammate_1, s.teammate_2, s.teammate_3].filter(Boolean).join(", ") || "None"}
                             </div>
                           </div>
                           <div>
                             <div className="text-xs text-white/40">Submitted</div>
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-white/80">
                               {new Date(s.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
                             </div>
                           </div>
@@ -241,51 +233,70 @@ function FormAdminPage() {
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <div className="flex items-center gap-1 text-xs text-white/40">
-                              <Github className="h-3 w-3" /> GitHub
-                            </div>
+                            <div className="flex items-center gap-1 text-xs text-white/40"><Github className="h-3 w-3" /> GitHub</div>
                             <a href={s.github_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
                               {s.github_url} <ExternalLink className="h-3 w-3" />
                             </a>
                           </div>
                           <div>
-                            <div className="flex items-center gap-1 text-xs text-white/40">
-                              <Globe className="h-3 w-3" /> Deployment
-                            </div>
+                            <div className="flex items-center gap-1 text-xs text-white/40"><Globe className="h-3 w-3" /> Deployment</div>
                             <a href={s.deployment_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
                               {s.deployment_url} <ExternalLink className="h-3 w-3" />
                             </a>
                           </div>
-                          <div>
-                            <div className="text-xs text-white/40">Project Summary</div>
-                            <div className="text-sm text-white/80">{s.project_summary}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-white/40">Uniqueness</div>
-                            <div className="text-sm text-white/80">{s.project_uniqueness}</div>
+                          <EditableField label="Project Summary" value={s.project_summary} id={s.id} field="project_summary" inputFn={fieldMutation.mutate} isTextarea />
+                          <EditableField label="Uniqueness" value={s.project_uniqueness} id={s.id} field="project_uniqueness" inputFn={fieldMutation.mutate} isTextarea />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-white/10 pt-4">
+                        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white/70">
+                          <MessageSquare className="h-4 w-4" /> Experience & Feedback
+                        </h3>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <EditableField label="Event Experience" value={s.event_experience || ""} id={s.id} field="event_experience" inputFn={fieldMutation.mutate} isTextarea />
+                          <div className="space-y-3">
+                            {s.feedback_screenshot_url && (
+                              <div>
+                                <div className="text-xs text-white/40">Feedback Screenshot</div>
+                                <a href={s.feedback_screenshot_url} target="_blank" rel="noopener" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                  View Screenshot <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            )}
+                            {s.video_link && (
+                              <div>
+                                <div className="flex items-center gap-1 text-xs text-white/40"><Video className="h-3 w-3" /> Video Link</div>
+                                <a href={s.video_link} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                                  {s.video_link} <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+                      <div className="border-t border-white/10 pt-4">
                         <span className="text-xs text-white/40">Set Round:</span>
-                        {ROUND_OPTIONS.map((r) => (
-                          <button
-                            key={r}
-                            onClick={() => updateMutation.mutate({ id: s.id, roundStatus: r })}
-                            disabled={s.round_status === r || updateMutation.isPending}
-                            className={`rounded-md border px-3 py-1 text-xs font-semibold transition ${
-                              s.round_status === r
-                                ? "border-primary bg-primary/20 text-primary"
-                                : "border-white/10 text-white/50 hover:bg-white/5"
-                            } disabled:opacity-50`}
-                          >
-                            {r.replace("_", " ").toUpperCase()}
-                          </button>
-                        ))}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {ROUND_OPTIONS.map((r) => (
+                            <button
+                              key={r}
+                              onClick={() => updateMutation.mutate({ id: s.id, roundStatus: r })}
+                              disabled={s.round_status === r || updateMutation.isPending}
+                              className={`rounded-md border px-3 py-1 text-xs font-semibold transition ${
+                                s.round_status === r
+                                  ? "border-primary bg-primary/20 text-primary"
+                                  : "border-white/10 text-white/50 hover:bg-white/5"
+                              } disabled:opacity-50`}
+                            >
+                              {r.replace("_", " ").toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
-                      <div className="mt-3 flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <input
                           type="text"
                           className={`${input} flex-1`}
@@ -294,13 +305,7 @@ function FormAdminPage() {
                           onChange={(e) => setNotesMap((prev) => ({ ...prev, [s.id]: e.target.value }))}
                         />
                         <button
-                          onClick={() =>
-                            updateMutation.mutate({
-                              id: s.id,
-                              roundStatus: s.round_status,
-                              adminNotes: notesMap[s.id] ?? "",
-                            })
-                          }
+                          onClick={() => updateMutation.mutate({ id: s.id, roundStatus: s.round_status, adminNotes: notesMap[s.id] ?? "" })}
                           disabled={updateMutation.isPending}
                           className="rounded-md bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/20 disabled:opacity-50"
                         >
