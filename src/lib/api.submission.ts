@@ -102,6 +102,8 @@ export const submitFinalProject = createServerFn({ method: "POST" })
         .parse(d)
   )
   .handler(async ({ data }) => {
+    const deadline = new Date("2026-07-28T11:59:00+05:30").getTime();
+    if (Date.now() >= deadline) throw new Error("Submissions are closed. The deadline was 11:59 AM IST, 28 July 2026.");
     const { error } = await supabaseAdmin.from("final_submissions").insert({
       team_name: data.teamName,
       team_lead_name: data.teamLeadName,

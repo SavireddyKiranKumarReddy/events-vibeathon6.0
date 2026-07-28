@@ -37,12 +37,15 @@ async function uploadFile(file: File, folder: string): Promise<string> {
   return urlData.publicUrl;
 }
 
+const SUBMISSION_DEADLINE = new Date("2026-07-28T11:59:00+05:30");
+
 function SubmissionPage() {
   const submitFn = useServerFn(submitFinalProject);
   const pptRef = useRef<HTMLInputElement>(null);
   const feedbackRef = useRef<HTMLInputElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [isClosed] = useState(() => Date.now() >= SUBMISSION_DEADLINE.getTime());
   const [pptState, setPptState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [pptName, setPptName] = useState("");
   const [pptSize, setPptSize] = useState("");
@@ -151,6 +154,19 @@ function SubmissionPage() {
   const canSubmit = form.teamName && form.teamLeadName && form.teamLeadEmail
     && form.teamLeadContact && form.githubUrl && form.deploymentUrl && form.pptUrl
     && form.phasesCompleted > 0 && form.feedbackScreenshotUrl;
+
+  if (isClosed) return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
+      <div className="glass mx-auto w-full max-w-lg p-10 text-center">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10">
+          <XCircle className="h-10 w-10 text-red-400" />
+        </div>
+        <h1 className="text-3xl font-bold text-white">Submissions Closed</h1>
+        <p className="mt-4 text-base text-white/60">The submission window closed at <strong className="text-white/80">11:59 AM IST, 28 July 2026</strong>.</p>
+        <p className="mt-3 text-sm text-white/40">If you already submitted, your entry is safe. Good luck!</p>
+      </div>
+    </div>
+  );
 
   if (submitted) return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
