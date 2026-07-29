@@ -210,7 +210,7 @@ export const getSubmissionByEmail = createServerFn({ method: "POST" })
     const { data: submission, error } = await supabaseAdmin
       .from("final_submissions")
       .select("*")
-      .eq("team_lead_email", data.email.toLowerCase().trim())
+      .ilike("team_lead_email", data.email.toLowerCase().trim())
       .maybeSingle();
     if (error) throw new Error("Failed to fetch results");
     if (!submission) return null;
