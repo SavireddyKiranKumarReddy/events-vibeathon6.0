@@ -116,7 +116,7 @@ function Phase1ResultsPage() {
                         <p className="text-sm font-medium text-green-300">Congratulations! You've qualified for Round 2.</p>
                         <p className="mt-1.5 text-sm text-white/60">Please check the review given below and refine accordingly. Further updates will be given by the NxtGensec team.</p>
                         <a
-                          href="https://chat.whatsapp.com/Egog3V3TyRPEw5GHcm759b"
+                          href="https://chat.whatsapp.com/HcsSWwwMOKLKvc2VyUELpA"
                           target="_blank"
                           rel="noopener"
                           className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-600/20 px-4 py-2.5 text-sm font-medium text-green-300 transition-all hover:bg-green-600/30"
