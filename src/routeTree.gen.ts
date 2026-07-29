@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as Day2RouteImport } from './routes/day2'
+import { Route as Phase1ResultsRouteImport } from './routes/phase1-results'
 import { Route as SubmissionRouteImport } from './routes/submission'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -51,6 +52,11 @@ const AuthRoute = AuthRouteImport.update({
 const Day2Route = Day2RouteImport.update({
   id: '/day2',
   path: '/day2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Phase1ResultsRoute = Phase1ResultsRouteImport.update({
+  id: '/phase1-results',
+  path: '/phase1-results',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SubmissionRoute = SubmissionRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
+  '/phase1-results': typeof Phase1ResultsRoute
   '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/phase1-results': typeof Phase1ResultsRoute
   '/submission': typeof SubmissionRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
+  '/phase1-results': typeof Phase1ResultsRoute
   '/submission': typeof SubmissionRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/day2'
+    | '/phase1-results'
     | '/submission'
     | '/admin'
     | '/dashboard'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/phase1-results'
     | '/submission'
     | '/admin'
     | '/dashboard'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/day2'
+    | '/phase1-results'
     | '/submission'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   Day2Route: typeof Day2RouteWithChildren
+  Phase1ResultsRoute: typeof Phase1ResultsRoute
   SubmissionRoute: typeof SubmissionRoute
 }
 
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/day2'
       fullPath: '/day2'
       preLoaderRoute: typeof Day2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phase1-results': {
+      id: '/phase1-results'
+      path: '/phase1-results'
+      fullPath: '/phase1-results'
+      preLoaderRoute: typeof Phase1ResultsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/submission': {
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   Day2Route: Day2RouteWithChildren,
+  Phase1ResultsRoute: Phase1ResultsRoute,
   SubmissionRoute: SubmissionRoute,
 }
 export const routeTree = rootRouteImport
