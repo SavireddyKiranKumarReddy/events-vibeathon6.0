@@ -84,7 +84,10 @@ function R2SubmissionPage() {
         setError("This email is not eligible for Round 2. Make sure your team qualified.");
       }
     },
-    onError: (e: any) => setError(e.message || "Failed to check eligibility"),
+    onError: (e: any) => setError(
+      e?.message?.includes("Invalid email") ? "Please enter a valid email address." :
+      e?.message || "Failed to check eligibility"
+    ),
   });
 
   async function handlePpt(e: React.ChangeEvent<HTMLInputElement>) {
