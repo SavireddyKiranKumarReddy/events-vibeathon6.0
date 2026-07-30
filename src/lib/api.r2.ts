@@ -2,10 +2,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const DEADLINE_IST = new Date("2026-07-30T23:59:00+05:30").getTime();
+
+function isPastDeadline(): boolean {
+  return Date.now() >= DEADLINE_IST;
+}
+
 export const checkR2Eligibility = createServerFn({ method: "POST" })
   .validator((d: { email: string }) => z.object({ email: z.string().email() }).parse(d))
   .handler(async ({ data }) => {
     const email = data.email.toLowerCase().trim();
+    if (isPastDeadline()) {
+      return null;
+    }
     const { data: submission, error } = await supabaseAdmin
       .from("final_submissions")
       .select("id, team_name, team_lead_name, team_lead_email, team_lead_contact, teammate_1, teammate_2, teammate_3, github_url, deployment_url, ppt_url, video_link, phases_completed, project_summary, project_uniqueness")
@@ -54,6 +63,9 @@ export const submitR2Project = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const email = data.teamLeadEmail.toLowerCase().trim();
+    if (isPastDeadline()) {
+      throw new Error("Submission deadline has passed (11:59 PM IST, July 30). No further submissions accepted.");
+    }
     const newGithub = data.githubUrl;
     const newDeploy = data.deploymentUrl;
     const oldGithub = data.existingGithub || "";

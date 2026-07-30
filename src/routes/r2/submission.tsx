@@ -37,6 +37,9 @@ async function uploadFile(file: File, folder: string): Promise<string> {
   return urlData.publicUrl;
 }
 
+const DEADLINE_IST = new Date("2026-07-30T23:59:00+05:30").getTime();
+const IS_CLOSED = Date.now() >= DEADLINE_IST;
+
 function R2SubmissionPage() {
   const eligibilityFn = useServerFn(checkR2Eligibility);
   const submitFn = useServerFn(submitR2Project);
@@ -187,6 +190,18 @@ function R2SubmissionPage() {
     { label: "Project Summary", value: form.projectSummary },
     { label: "Uniqueness", value: form.projectUniqueness },
   ].filter(f => f.value) : [];
+
+  if (IS_CLOSED) return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
+      <div className="glass mx-auto w-full max-w-lg p-10 text-center">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10">
+          <XCircle className="h-10 w-10 text-red-400" />
+        </div>
+        <h1 className="text-3xl font-bold text-white">Submissions Closed</h1>
+        <p className="mt-4 text-base text-white/60">The Round 2 submission deadline (11:59 PM IST, July 30) has passed. No further submissions are accepted.</p>
+      </div>
+    </div>
+  );
 
   if (step === "done") return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
