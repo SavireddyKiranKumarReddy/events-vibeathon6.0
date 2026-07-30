@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { checkR2Eligibility, submitR2Project } from "@/lib/api.r2";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CheckCircle2, XCircle, Github, Users, AlertTriangle,
-  ExternalLink, FileText, Mail, Search, Lock,
+  ExternalLink, FileText, Mail, Search, Lock, Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/r2/submission")({
@@ -17,9 +18,30 @@ export const Route = createFileRoute("/r2/submission")({
 const inputCls = "w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 outline-none transition-all focus:border-primary focus:bg-white/[0.07] focus:ring-1 focus:ring-primary/30 text-sm";
 const labelCls = "block text-sm font-medium text-white/70 mb-1.5";
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+async function uploadFile(file: File, folder: string): Promise<string> {
+  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`;
+
+  const { error: upErr } = await supabase.storage
+    .from("event-submissions")
+    .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+  if (upErr) throw new Error(upErr.message);
+
+  const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
 function R2SubmissionPage() {
   const eligibilityFn = useServerFn(checkR2Eligibility);
   const submitFn = useServerFn(submitR2Project);
+
+  const pptRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<"email" | "form" | "done">("email");
   const [email, setEmail] = useState("");
