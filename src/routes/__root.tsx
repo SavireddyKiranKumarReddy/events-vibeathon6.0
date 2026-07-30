@@ -144,7 +144,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const MAINTENANCE_WHITELIST = ["/submission", "/form-admin", "/phase1-results"];
+const MAINTENANCE_WHITELIST = ["/submission", "/form-admin", "/phase1-results", "/r2/submission", "/r2/admin"];
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

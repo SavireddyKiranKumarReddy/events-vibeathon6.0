@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as Day2RouteImport } from './routes/day2'
 import { Route as Phase1ResultsRouteImport } from './routes/phase1-results'
+import { Route as R2RouteRouteImport } from './routes/r2/route'
 import { Route as SubmissionRouteImport } from './routes/submission'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -33,6 +34,8 @@ import { Route as Day2Nontech5RouteImport } from './routes/day2/nontech5'
 import { Route as Day2Tech3RouteImport } from './routes/day2/tech3'
 import { Route as Day2Tech4RouteImport } from './routes/day2/tech4'
 import { Route as Day2Tech5RouteImport } from './routes/day2/tech5'
+import { Route as R2AdminRouteImport } from './routes/r2/admin'
+import { Route as R2SubmissionRouteImport } from './routes/r2/submission'
 import { Route as AuthenticatedEventsTrackSlotRouteImport } from './routes/_authenticated/events.$track.$slot'
 
 const IndexRoute = IndexRouteImport.update({
@@ -57,6 +60,11 @@ const Day2Route = Day2RouteImport.update({
 const Phase1ResultsRoute = Phase1ResultsRouteImport.update({
   id: '/phase1-results',
   path: '/phase1-results',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R2RouteRoute = R2RouteRouteImport.update({
+  id: '/r2',
+  path: '/r2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SubmissionRoute = SubmissionRouteImport.update({
@@ -155,6 +163,16 @@ const Day2Tech5Route = Day2Tech5RouteImport.update({
   path: '/tech5',
   getParentRoute: () => Day2Route,
 } as any)
+const R2AdminRoute = R2AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => R2RouteRoute,
+} as any)
+const R2SubmissionRoute = R2SubmissionRouteImport.update({
+  id: '/submission',
+  path: '/submission',
+  getParentRoute: () => R2RouteRoute,
+} as any)
 const AuthenticatedEventsTrackSlotRoute =
   AuthenticatedEventsTrackSlotRouteImport.update({
     id: '/$track/$slot',
@@ -164,6 +182,7 @@ const AuthenticatedEventsTrackSlotRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/r2': typeof R2RouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
   '/phase1-results': typeof Phase1ResultsRoute
@@ -185,11 +204,14 @@ export interface FileRoutesByFullPath {
   '/day2/tech3': typeof Day2Tech3Route
   '/day2/tech4': typeof Day2Tech4Route
   '/day2/tech5': typeof Day2Tech5Route
+  '/r2/admin': typeof R2AdminRoute
+  '/r2/submission': typeof R2SubmissionRoute
   '/day2/': typeof Day2IndexRoute
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/r2': typeof R2RouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/phase1-results': typeof Phase1ResultsRoute
   '/submission': typeof SubmissionRoute
@@ -210,6 +232,8 @@ export interface FileRoutesByTo {
   '/day2/tech3': typeof Day2Tech3Route
   '/day2/tech4': typeof Day2Tech4Route
   '/day2/tech5': typeof Day2Tech5Route
+  '/r2/admin': typeof R2AdminRoute
+  '/r2/submission': typeof R2SubmissionRoute
   '/day2': typeof Day2IndexRoute
   '/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
@@ -217,6 +241,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/r2': typeof R2RouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/day2': typeof Day2RouteWithChildren
   '/phase1-results': typeof Phase1ResultsRoute
@@ -238,6 +263,8 @@ export interface FileRoutesById {
   '/day2/tech3': typeof Day2Tech3Route
   '/day2/tech4': typeof Day2Tech4Route
   '/day2/tech5': typeof Day2Tech5Route
+  '/r2/admin': typeof R2AdminRoute
+  '/r2/submission': typeof R2SubmissionRoute
   '/day2/': typeof Day2IndexRoute
   '/_authenticated/events/$track/$slot': typeof AuthenticatedEventsTrackSlotRoute
 }
@@ -245,6 +272,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/r2'
     | '/auth'
     | '/day2'
     | '/phase1-results'
@@ -266,11 +294,14 @@ export interface FileRouteTypes {
     | '/day2/tech3'
     | '/day2/tech4'
     | '/day2/tech5'
+    | '/r2/admin'
+    | '/r2/submission'
     | '/day2/'
     | '/events/$track/$slot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/r2'
     | '/auth'
     | '/phase1-results'
     | '/submission'
@@ -291,12 +322,15 @@ export interface FileRouteTypes {
     | '/day2/tech3'
     | '/day2/tech4'
     | '/day2/tech5'
+    | '/r2/admin'
+    | '/r2/submission'
     | '/day2'
     | '/events/$track/$slot'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/r2'
     | '/auth'
     | '/day2'
     | '/phase1-results'
@@ -318,6 +352,8 @@ export interface FileRouteTypes {
     | '/day2/tech3'
     | '/day2/tech4'
     | '/day2/tech5'
+    | '/r2/admin'
+    | '/r2/submission'
     | '/day2/'
     | '/_authenticated/events/$track/$slot'
   fileRoutesById: FileRoutesById
@@ -325,6 +361,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  R2RouteRoute: typeof R2RouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   Day2Route: typeof Day2RouteWithChildren
   Phase1ResultsRoute: typeof Phase1ResultsRoute
@@ -366,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/phase1-results'
       fullPath: '/phase1-results'
       preLoaderRoute: typeof Phase1ResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r2': {
+      id: '/r2'
+      path: '/r2'
+      fullPath: '/r2'
+      preLoaderRoute: typeof R2RouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/submission': {
@@ -501,6 +545,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day2Tech5RouteImport
       parentRoute: typeof Day2Route
     }
+    '/r2/admin': {
+      id: '/r2/admin'
+      path: '/admin'
+      fullPath: '/r2/admin'
+      preLoaderRoute: typeof R2AdminRouteImport
+      parentRoute: typeof R2RouteRoute
+    }
+    '/r2/submission': {
+      id: '/r2/submission'
+      path: '/submission'
+      fullPath: '/r2/submission'
+      preLoaderRoute: typeof R2SubmissionRouteImport
+      parentRoute: typeof R2RouteRoute
+    }
     '/_authenticated/events/$track/$slot': {
       id: '/_authenticated/events/$track/$slot'
       path: '/$track/$slot'
@@ -549,6 +607,19 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface R2RouteRouteChildren {
+  R2AdminRoute: typeof R2AdminRoute
+  R2SubmissionRoute: typeof R2SubmissionRoute
+}
+
+const R2RouteRouteChildren: R2RouteRouteChildren = {
+  R2AdminRoute: R2AdminRoute,
+  R2SubmissionRoute: R2SubmissionRoute,
+}
+
+const R2RouteRouteWithChildren =
+  R2RouteRoute._addFileChildren(R2RouteRouteChildren)
+
 interface Day2RouteChildren {
   Day2AdminCredsRoute: typeof Day2AdminCredsRoute
   Day2LeaderboardRoute: typeof Day2LeaderboardRoute
@@ -578,6 +649,7 @@ const Day2RouteWithChildren = Day2Route._addFileChildren(Day2RouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  R2RouteRoute: R2RouteRouteWithChildren,
   AuthRoute: AuthRoute,
   Day2Route: Day2RouteWithChildren,
   Phase1ResultsRoute: Phase1ResultsRoute,
