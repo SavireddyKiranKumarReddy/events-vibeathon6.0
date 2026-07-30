@@ -26,6 +26,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       projectSummary: string; projectUniqueness: string; uniqueFeatures: string;
       videoLink: string;
       llmsUsed: string; vibecodingTools: string; databaseUsed: string; oauthExists: string;
+      developmentFlow: string; techStackUsed: string;
     }) =>
       z.object({
         teamName: z.string().min(1), teamLeadName: z.string().min(1),
@@ -37,6 +38,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
         videoLink: z.string().default(""),
         llmsUsed: z.string().default(""), vibecodingTools: z.string().default(""),
         databaseUsed: z.string().default(""), oauthExists: z.string().default(""),
+        developmentFlow: z.string().default(""), techStackUsed: z.string().default(""),
       }).parse(d)
   )
   .handler(async ({ data }) => {
@@ -51,6 +53,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       video_link: data.videoLink,
       llms_used: data.llmsUsed, vibecoding_tools: data.vibecodingTools,
       database_used: data.databaseUsed, oauth_exists: data.oauthExists,
+      development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
     });
     if (error) {
       if (error.code === "23505") throw new Error("A submission from this email already exists");
@@ -79,6 +82,7 @@ export const updateR2SubmissionField = createServerFn({ method: "POST" })
       "github_url", "deployment_url", "ppt_url",
       "phases_completed", "project_summary", "project_uniqueness", "unique_features",
       "video_link", "llms_used", "vibecoding_tools", "database_used", "oauth_exists",
+      "development_flow", "tech_stack_used",
       "round_status", "admin_notes",
     ];
     if (!allowed.includes(data.field)) throw new Error("Invalid field");

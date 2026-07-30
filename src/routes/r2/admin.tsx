@@ -225,6 +225,8 @@ function R2AdminPage() {
               "Project Summary": s.project_summary,
               "Uniqueness": s.project_uniqueness,
               "Unique Features": s.unique_features,
+              "Development Flow": s.development_flow,
+              "Tech Stack Used": s.tech_stack_used,
               "LLMs Used": s.llms_used,
               "Vibecoding Tools": s.vibecoding_tools,
               "Database Used": s.database_used,
@@ -238,7 +240,8 @@ function R2AdminPage() {
               { wch: 20 }, { wch: 20 }, { wch: 20 },
               { wch: 35 }, { wch: 35 }, { wch: 50 }, { wch: 35 },
               { wch: 8 }, { wch: 12 }, { wch: 30 }, { wch: 50 },
-              { wch: 50 }, { wch: 50 }, { wch: 30 }, { wch: 30 },
+              { wch: 50 },               { wch: 50 }, { wch: 50 },
+              { wch: 50 }, { wch: 30 }, { wch: 30 },
               { wch: 30 }, { wch: 30 }, { wch: 25 },
             ];
             XLSX.utils.book_append_sheet(wb, ws, "R2 Submissions");
@@ -343,6 +346,13 @@ function R2AdminPage() {
                               </div>
                             )}
                           </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-white/10 pt-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <EditableField label="Development Flow" value={s.development_flow || ""} id={s.id} field="development_flow" inputFn={fieldMutation.mutate} isTextarea />
+                          <EditableField label="Tech Stack Used" value={s.tech_stack_used || ""} id={s.id} field="tech_stack_used" inputFn={fieldMutation.mutate} isTextarea />
                         </div>
                       </div>
 

@@ -58,6 +58,7 @@ function R2SubmissionPage() {
     phasesCompleted: 0,
     projectSummary: "", projectUniqueness: "", uniqueFeatures: "",
     llmsUsed: "", vibecodingTools: "", databaseUsed: "", oauthExists: "",
+    developmentFlow: "", techStackUsed: "",
   });
 
   const update = (f: string, v: string | number) => setForm(p => ({ ...p, [f]: v }));
@@ -277,6 +278,22 @@ function R2SubmissionPage() {
                     <label className={labelCls}>Any unique or innovative features apart from what's mentioned above? <span className="text-xs text-white/30">(optional)</span></label>
                     <textarea className={`${inputCls} resize-none`} rows={2} maxLength={1000} placeholder="List any additional unique/innovative features your project has..." value={form.uniqueFeatures} onChange={e => update("uniqueFeatures", e.target.value)} />
                     <div className="mt-1 text-right text-xs text-white/30">{form.uniqueFeatures.length}/1000</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">Development Flow & Tech Stack</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>Please mention the flow of your entire development how it works</label>
+                    <textarea className={`${inputCls} resize-none`} rows={3} maxLength={2000} placeholder="Describe the development flow step-by-step..." value={form.developmentFlow} onChange={e => update("developmentFlow", e.target.value)} />
+                    <div className="mt-1 text-right text-xs text-white/30">{form.developmentFlow.length}/2000</div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Mention the technical stack you have used</label>
+                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={1000} placeholder="e.g. frontend, backend, database, hosting, APIs..." value={form.techStackUsed} onChange={e => update("techStackUsed", e.target.value)} />
+                    <div className="mt-1 text-right text-xs text-white/30">{form.techStackUsed.length}/1000</div>
                   </div>
                 </div>
               </div>
