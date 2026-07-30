@@ -7,7 +7,7 @@ export const checkR2Eligibility = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: submission, error } = await supabaseAdmin
       .from("final_submissions")
-      .select("id, team_name, team_lead_name, team_lead_email, github_url, deployment_url, ppt_url, video_link")
+      .select("id, team_name, team_lead_name, team_lead_email, team_lead_contact, teammate_1, teammate_2, teammate_3, github_url, deployment_url, ppt_url, video_link, phases_completed, project_summary, project_uniqueness")
       .ilike("team_lead_email", data.email.toLowerCase().trim())
       .eq("round_status", "round_2")
       .maybeSingle();

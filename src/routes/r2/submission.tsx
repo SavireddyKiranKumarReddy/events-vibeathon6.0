@@ -72,6 +72,13 @@ function R2SubmissionPage() {
           teamName: data.team_name,
           teamLeadName: data.team_lead_name,
           teamLeadEmail: data.team_lead_email,
+          teamLeadContact: data.team_lead_contact || "",
+          teammate1: data.teammate_1 || "",
+          teammate2: data.teammate_2 || "",
+          teammate3: data.teammate_3 || "",
+          phasesCompleted: data.phases_completed || 0,
+          projectSummary: data.project_summary || "",
+          projectUniqueness: data.project_uniqueness || "",
           githubUrl: data.github_url || "",
           deploymentUrl: data.deployment_url || "",
           pptUrl: data.ppt_url || "",
@@ -144,6 +151,16 @@ function R2SubmissionPage() {
     { label: "PPT", value: form.pptUrl, icon: FileText },
     { label: "Video Link", value: form.videoLink, icon: ExternalLink },
   ].filter(l => l.value) : [];
+
+  const phase1Fields = teamInfo ? [
+    { label: "Contact Number", value: form.teamLeadContact },
+    { label: "Teammate 1", value: form.teammate1 },
+    { label: "Teammate 2", value: form.teammate2 },
+    { label: "Teammate 3", value: form.teammate3 },
+    { label: "Phases Completed", value: String(form.phasesCompleted) },
+    { label: "Project Summary", value: form.projectSummary },
+    { label: "Uniqueness", value: form.projectUniqueness },
+  ].filter(f => f.value) : [];
 
   if (step === "done") return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
@@ -225,6 +242,17 @@ function R2SubmissionPage() {
                     <div className="mt-0.5 text-sm text-white/90 break-all">{form.teamLeadEmail}</div>
                   </div>
                   <div className="border-t border-white/5 pt-3">
+                    <div className="text-xs text-white/40 mb-2">Phase 1 Fields</div>
+                    <div className="space-y-1.5">
+                      {phase1Fields.map(f => f.value ? (
+                        <div key={f.label} className="rounded-md bg-white/[0.03] px-3 py-2">
+                          <div className="text-[10px] text-white/40">{f.label}</div>
+                          <div className="mt-0.5 text-xs text-white/70 break-words">{f.value}</div>
+                        </div>
+                      ) : null)}
+                    </div>
+                  </div>
+                  <div className="border-t border-white/5 pt-3">
                     <div className="text-xs text-white/40 mb-2">Project Links</div>
                     <div className="space-y-2">
                       {lockedLinks && lockedLinks.map((l: any) => l.value ? (
@@ -243,46 +271,8 @@ function R2SubmissionPage() {
 
             <div className="lg:col-span-3 space-y-5">
               <div className="glass p-5">
-                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/80"><Users className="h-4 w-4 text-primary" /> Contact & Team</h3>
-                <div className="space-y-3">
-                  <div><label className={labelCls}>Contact Number *</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
-                  <div><label className={labelCls}>Teammate 1</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate1} onChange={e => update("teammate1", e.target.value)} /></div>
-                  <div><label className={labelCls}>Teammate 2</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate2} onChange={e => update("teammate2", e.target.value)} /></div>
-                  <div><label className={labelCls}>Teammate 3</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate3} onChange={e => update("teammate3", e.target.value)} /></div>
-                </div>
-              </div>
-
-              <div className="glass p-5">
-                <h3 className="mb-4 text-sm font-semibold text-white/80">Phases Completed *</h3>
-                <p className="mb-3 text-xs text-white/50">How many phases of your problem statement did you complete?</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} type="button" onClick={() => update("phasesCompleted", n)}
-                      className={`rounded-lg border-2 py-3 text-center text-lg font-bold transition-all ${
-                        form.phasesCompleted === n ? "border-primary bg-primary/15 text-primary shadow-lg shadow-primary/10" : "border-white/10 bg-white/[0.03] text-white/20 hover:border-white/25 hover:text-white/50"
-                      }`}>{n}</button>
-                  ))}
-                </div>
-                {form.phasesCompleted === 0 && <p className="mt-2 text-xs text-yellow-400/80">Please select a number above to continue.</p>}
-                <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400/80">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Cross-check before submitting. If a phase you mark as working fails during verification, your team will <strong>not be considered</strong>.</span>
-                </div>
-              </div>
-
-              <div className="glass p-5">
                 <h3 className="mb-4 text-sm font-semibold text-white/80">About Your Project</h3>
                 <div className="space-y-3">
-                  <div>
-                    <label className={labelCls}>What does your project do? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
-                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={500} placeholder="Tell us briefly what you built..." value={form.projectSummary} onChange={e => update("projectSummary", e.target.value)} />
-                    <div className="mt-1 text-right text-xs text-white/30">{form.projectSummary.length}/500</div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>What makes it unique? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
-                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={500} placeholder="What's the one thing that makes your project stand out?" value={form.projectUniqueness} onChange={e => update("projectUniqueness", e.target.value)} />
-                    <div className="mt-1 text-right text-xs text-white/30">{form.projectUniqueness.length}/500</div>
-                  </div>
                   <div>
                     <label className={labelCls}>Any unique or innovative features apart from what's mentioned above? <span className="text-xs text-white/30">(optional)</span></label>
                     <textarea className={`${inputCls} resize-none`} rows={2} maxLength={1000} placeholder="List any additional unique/innovative features your project has..." value={form.uniqueFeatures} onChange={e => update("uniqueFeatures", e.target.value)} />
