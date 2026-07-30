@@ -24,14 +24,18 @@ export const checkR2Eligibility = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to check eligibility");
     if (!submission) return null;
 
-    // Also fetch existing r2_submission if any (for re-submission)
+    // Check if already submitted
     const { data: existing } = await supabaseAdmin
       .from("r2_submissions")
       .select("id, github_url, deployment_url, credits_used")
       .ilike("team_lead_email", email)
       .maybeSingle();
 
-    return { ...submission, existing_r2_id: existing?.id || null, existing_github: existing?.github_url || "", existing_deployment: existing?.deployment_url || "", existing_credits: existing?.credits_used || 0 };
+    if (existing) {
+      return { already_submitted: true, team_name: submission.team_name, team_lead_email: submission.team_lead_email };
+    }
+
+    return { ...submission, existing_r2_id: null, existing_github: "", existing_deployment: "", existing_credits: 0, already_submitted: false };
   });
 
 export const submitR2Project = createServerFn({ method: "POST" })
@@ -65,6 +69,9 @@ export const submitR2Project = createServerFn({ method: "POST" })
     const email = data.teamLeadEmail.toLowerCase().trim();
     if (isPastDeadline()) {
       throw new Error("Submission deadline has passed (11:59 PM IST, July 30). No further submissions accepted.");
+    }
+    if (data.existingR2Id) {
+      throw new Error("This project has already been submitted. No further edits allowed.");
     }
     const newGithub = data.githubUrl;
     const newDeploy = data.deploymentUrl;

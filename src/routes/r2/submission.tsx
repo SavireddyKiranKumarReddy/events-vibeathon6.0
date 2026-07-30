@@ -73,35 +73,37 @@ function R2SubmissionPage() {
   const checkEmail = useMutation({
     mutationFn: () => eligibilityFn({ data: { email } }),
     onSuccess: (data) => {
-      if (data) {
-        setTeamInfo(data);
-        setExistingR2Id(data.existing_r2_id || null);
-        setExistingGithub(data.existing_github || "");
-        setExistingDeployment(data.existing_deployment || "");
-        setCreditsUsed(data.existing_credits || 0);
-        setForm(p => ({
-          ...p,
-          teamName: data.team_name,
-          teamLeadName: data.team_lead_name,
-          teamLeadEmail: data.team_lead_email,
-          teamLeadContact: data.team_lead_contact || "",
-          teammate1: data.teammate_1 || "",
-          teammate2: data.teammate_2 || "",
-          teammate3: data.teammate_3 || "",
-          phasesCompleted: data.phases_completed || 0,
-          projectSummary: data.project_summary || "",
-          projectUniqueness: data.project_uniqueness || "",
-          githubUrl: data.github_url || "",
-          deploymentUrl: data.deployment_url || "",
-          pptUrl: data.ppt_url || "",
-          videoLink: data.video_link || "",
-        }));
-        setLocked(true);
-        setStep("form");
-        setError("");
-      } else {
+      if (!data) {
         setError("This email is not eligible for Round 2. Make sure your team qualified.");
+        return;
       }
+      if (data.already_submitted) {
+        setTeamInfo(data);
+        setStep("already-submitted");
+        setError("");
+        return;
+      }
+      setTeamInfo(data);
+      setForm(p => ({
+        ...p,
+        teamName: data.team_name,
+        teamLeadName: data.team_lead_name,
+        teamLeadEmail: data.team_lead_email,
+        teamLeadContact: data.team_lead_contact || "",
+        teammate1: data.teammate_1 || "",
+        teammate2: data.teammate_2 || "",
+        teammate3: data.teammate_3 || "",
+        phasesCompleted: data.phases_completed || 0,
+        projectSummary: data.project_summary || "",
+        projectUniqueness: data.project_uniqueness || "",
+        githubUrl: data.github_url || "",
+        deploymentUrl: data.deployment_url || "",
+        pptUrl: data.ppt_url || "",
+        videoLink: data.video_link || "",
+      }));
+      setLocked(true);
+      setStep("form");
+      setError("");
     },
     onError: (e: any) => setError(
       e?.message?.includes("Invalid email") ? "Please enter a valid email address." :
@@ -199,6 +201,19 @@ function R2SubmissionPage() {
         </div>
         <h1 className="text-3xl font-bold text-white">Submissions Closed</h1>
         <p className="mt-4 text-base text-white/60">The Round 2 submission deadline (11:59 PM IST, July 30) has passed. No further submissions are accepted.</p>
+      </div>
+    </div>
+  );
+
+  if (step === "already-submitted") return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
+      <div className="glass mx-auto w-full max-w-lg p-10 text-center">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10">
+          <CheckCircle2 className="h-10 w-10 text-blue-400" />
+        </div>
+        <h1 className="text-3xl font-bold text-white">Already Submitted</h1>
+        <p className="mt-2 text-base text-white/60">{teamInfo?.team_name} — your Round 2 project has already been submitted.</p>
+        <p className="mt-1 text-sm text-white/40">No further edits are allowed. We'll review it soon — best of luck!</p>
       </div>
     </div>
   );
