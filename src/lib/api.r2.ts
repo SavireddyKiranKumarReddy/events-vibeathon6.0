@@ -107,18 +107,43 @@ export const submitR2Project = createServerFn({ method: "POST" })
     }
 
     if (error?.code === "PGRST204") {
-      // New columns don't exist — retry without them
-      const core: Record<string, any> = { ...payload };
-      delete core.development_flow;
-      delete core.tech_stack_used;
-      delete core.credits_used;
+      // Some columns don't exist yet — retry with minimal known columns
+      const minimal: Record<string, any> = {
+        team_name: data.teamName, team_lead_name: data.teamLeadName,
+        team_lead_contact: data.teamLeadContact, team_lead_email: email,
+        teammate_1: data.teammate1, teammate_2: data.teammate2, teammate_3: data.teammate3,
+        github_url: newGithub, deployment_url: newDeploy, ppt_url: data.pptUrl,
+        video_link: data.videoLink,
+        phases_completed: data.phasesCompleted,
+        project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness,
+        feedback_screenshot_url: "", event_experience: "",
+      };
+
+      // Add fields that might exist
+      const tryFields = ["unique_features", "llms_used", "vibecoding_tools", "database_used", "oauth_exists",
+        "development_flow", "tech_stack_used", "credits_used"];
+      const extras: Record<string, any> = {
+        unique_features: data.uniqueFeatures, llms_used: data.llmsUsed,
+        vibecoding_tools: data.vibecodingTools, database_used: data.databaseUsed,
+        oauth_exists: data.oauthExists, development_flow: data.developmentFlow,
+        tech_stack_used: data.techStackUsed, credits_used: newCredits,
+      };
+
       if (data.existingR2Id) {
-        ({ error } = await supabaseAdmin.from("r2_submissions").update(core).eq("id", data.existingR2Id));
+        // Try with extras first, fall back to minimal
+        ({ error } = await supabaseAdmin.from("r2_submissions").update({ ...minimal, ...extras }).eq("id", data.existingR2Id));
+        if (error?.code === "PGRST204") {
+          ({ error } = await supabaseAdmin.from("r2_submissions").update(minimal).eq("id", data.existingR2Id));
+        }
       } else {
-        ({ error } = await supabaseAdmin.from("r2_submissions").insert(core));
+        ({ error } = await supabaseAdmin.from("r2_submissions").insert({ ...minimal, ...extras }));
+        if (error?.code === "PGRST204") {
+          ({ error } = await supabaseAdmin.from("r2_submissions").insert(minimal));
+        }
       }
       if (error) {
         if (error.code === "23505") throw new Error("A submission from this email already exists");
+        console.error("R2 submit fallback error:", error);
         throw new Error("Failed to submit. Please try again.");
       }
       return { ok: true, creditsUsed: newCredits };
