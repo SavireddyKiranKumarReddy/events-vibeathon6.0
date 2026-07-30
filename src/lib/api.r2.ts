@@ -23,8 +23,8 @@ export const submitR2Project = createServerFn({ method: "POST" })
       teammate1: string; teammate2: string; teammate3: string;
       githubUrl: string; deploymentUrl: string; pptUrl: string;
       phasesCompleted: number;
-      projectSummary: string; projectUniqueness: string;
-      eventExperience: string; feedbackScreenshotUrl: string; videoLink: string;
+      projectSummary: string; projectUniqueness: string; uniqueFeatures: string;
+      videoLink: string;
     }) =>
       z.object({
         teamName: z.string().min(1), teamLeadName: z.string().min(1),
@@ -32,8 +32,8 @@ export const submitR2Project = createServerFn({ method: "POST" })
         teammate1: z.string().default(""), teammate2: z.string().default(""), teammate3: z.string().default(""),
         githubUrl: z.string().min(1), deploymentUrl: z.string().min(1), pptUrl: z.string().min(1),
         phasesCompleted: z.number().min(1).max(5),
-        projectSummary: z.string().default(""), projectUniqueness: z.string().default(""),
-        eventExperience: z.string().default(""), feedbackScreenshotUrl: z.string().min(1), videoLink: z.string().default(""),
+        projectSummary: z.string().default(""), projectUniqueness: z.string().default(""), uniqueFeatures: z.string().default(""),
+        videoLink: z.string().default(""),
       }).parse(d)
   )
   .handler(async ({ data }) => {
@@ -43,8 +43,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       teammate_1: data.teammate1, teammate_2: data.teammate2, teammate_3: data.teammate3,
       github_url: data.githubUrl, deployment_url: data.deploymentUrl, ppt_url: data.pptUrl,
       phases_completed: data.phasesCompleted,
-      project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness,
-      event_experience: data.eventExperience, feedback_screenshot_url: data.feedbackScreenshotUrl,
+      project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness, unique_features: data.uniqueFeatures,
       video_link: data.videoLink,
     });
     if (error) {
@@ -72,9 +71,8 @@ export const updateR2SubmissionField = createServerFn({ method: "POST" })
       "team_name", "team_lead_name", "team_lead_contact", "team_lead_email",
       "teammate_1", "teammate_2", "teammate_3",
       "github_url", "deployment_url", "ppt_url",
-      "phases_completed", "project_summary", "project_uniqueness",
-      "event_experience", "feedback_screenshot_url", "video_link",
-      "round_status", "admin_notes",
+      "phases_completed", "project_summary", "project_uniqueness", "unique_features",
+      "video_link", "round_status", "admin_notes",
     ];
     if (!allowed.includes(data.field)) throw new Error("Invalid field");
     const update: Record<string, any> = { updated_at: new Date().toISOString() };

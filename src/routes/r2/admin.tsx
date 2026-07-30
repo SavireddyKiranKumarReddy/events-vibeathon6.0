@@ -5,8 +5,8 @@ import { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { getR2Submissions, updateR2RoundStatus, updateR2SubmissionField, verifyR2Admin } from "@/lib/api.r2";
 import {
-  Shield, Filter, CheckCircle2, XCircle, ExternalLink, Github, Globe, Users,
-  ChevronDown, Search, Save, Pencil, Video, MessageSquare, Star, Download, Lock,
+  Shield, Filter, XCircle, ExternalLink, Github, Globe, Users,
+  ChevronDown, Search, Save, Pencil, Video, Download, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/r2/admin")({
@@ -224,8 +224,7 @@ function R2AdminPage() {
               "Admin Notes": s.admin_notes,
               "Project Summary": s.project_summary,
               "Uniqueness": s.project_uniqueness,
-              "Event Experience": s.event_experience,
-              "Feedback Screenshot URL": s.feedback_screenshot_url,
+              "Unique Features": s.unique_features,
               "Created At": s.created_at,
             }));
             const wb = XLSX.utils.book_new();
@@ -235,7 +234,7 @@ function R2AdminPage() {
               { wch: 20 }, { wch: 20 }, { wch: 20 },
               { wch: 35 }, { wch: 35 }, { wch: 50 }, { wch: 35 },
               { wch: 8 }, { wch: 12 }, { wch: 30 }, { wch: 50 },
-              { wch: 50 }, { wch: 50 }, { wch: 50 }, { wch: 25 },
+              { wch: 50 }, { wch: 50 }, { wch: 25 },
             ];
             XLSX.utils.book_append_sheet(wb, ws, "R2 Submissions");
             XLSX.writeFile(wb, `r2-submissions-${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -327,20 +326,9 @@ function R2AdminPage() {
                       </div>
 
                       <div className="border-t border-white/10 pt-4">
-                        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white/70">
-                          <MessageSquare className="h-4 w-4" /> Experience & Feedback
-                        </h3>
                         <div className="grid gap-4 sm:grid-cols-2">
-                          <EditableField label="Event Experience" value={s.event_experience || ""} id={s.id} field="event_experience" inputFn={fieldMutation.mutate} isTextarea />
+                          <EditableField label="Unique / Innovative Features" value={s.unique_features || ""} id={s.id} field="unique_features" inputFn={fieldMutation.mutate} isTextarea />
                           <div className="space-y-3">
-                            {s.feedback_screenshot_url && (
-                              <div>
-                                <div className="text-xs text-white/40">Feedback Screenshot</div>
-                                <a href={s.feedback_screenshot_url} target="_blank" rel="noopener" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                  View Screenshot <ExternalLink className="h-3 w-3" />
-                                </a>
-                              </div>
-                            )}
                             {s.video_link && (
                               <div>
                                 <div className="flex items-center gap-1 text-xs text-white/40"><Video className="h-3 w-3" /> Video Link</div>
