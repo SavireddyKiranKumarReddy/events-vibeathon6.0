@@ -275,7 +275,7 @@ function R2SubmissionPage() {
                 <h3 className="mb-4 text-sm font-semibold text-white/80">About Your Project</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className={labelCls}>Any unique or innovative features apart from what's mentioned above? <span className="text-xs text-white/30">(optional)</span></label>
+                    <label className={labelCls}>Any unique or innovative features in your project? <span className="text-xs text-white/30">(optional)</span></label>
                     <textarea className={`${inputCls} resize-none`} rows={2} maxLength={1000} placeholder="List any additional unique/innovative features your project has..." value={form.uniqueFeatures} onChange={e => update("uniqueFeatures", e.target.value)} />
                     <div className="mt-1 text-right text-xs text-white/30">{form.uniqueFeatures.length}/1000</div>
                   </div>
