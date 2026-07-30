@@ -146,9 +146,13 @@ function R2SubmissionPage() {
     && form.teamLeadContact && form.githubUrl && form.deploymentUrl && form.pptUrl
     && form.phasesCompleted > 0;
 
+  // Phase 1 originals — always locked, never change
+  const p1github = teamInfo?.github_url || "";
+  const p1deploy = teamInfo?.deployment_url || "";
+
   const lockedLinks = teamInfo ? [
-    { label: "GitHub URL", value: form.githubUrl, icon: Github },
-    { label: "Deployment URL", value: form.deploymentUrl, icon: ExternalLink },
+    { label: "GitHub URL (Phase 1)", value: p1github, icon: Github },
+    { label: "Deployment URL (Phase 1)", value: p1deploy, icon: ExternalLink },
     { label: "PPT", value: form.pptUrl, icon: FileText },
     { label: "Video Link", value: form.videoLink, icon: ExternalLink },
   ].filter(l => l.value) : [];
@@ -270,6 +274,22 @@ function R2SubmissionPage() {
             </div>
 
             <div className="lg:col-span-3 space-y-5">
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">Project Links (editable)</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>GitHub URL *</label>
+                    <input type="url" className={inputCls} placeholder="https://github.com/..." value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} />
+                    {p1github && form.githubUrl !== p1github && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1github}</p>}
+                  </div>
+                  <div>
+                    <label className={labelCls}>Deployment URL *</label>
+                    <input type="url" className={inputCls} placeholder="https://your-app.vercel.app..." value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} />
+                    {p1deploy && form.deploymentUrl !== p1deploy && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1deploy}</p>}
+                  </div>
+                </div>
+              </div>
+
               <div className="glass p-5">
                 <h3 className="mb-4 text-sm font-semibold text-white/80">Phases Completed</h3>
                 <p className="mb-3 text-xs text-white/50">How many phases of your problem statement did you complete?</p>

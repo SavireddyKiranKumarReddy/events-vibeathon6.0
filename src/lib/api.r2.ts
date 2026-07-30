@@ -42,6 +42,16 @@ export const submitR2Project = createServerFn({ method: "POST" })
       }).parse(d)
   )
   .handler(async ({ data }) => {
+    // Fetch Phase 1 data to compare URLs
+    const { data: p1 } = await supabaseAdmin
+      .from("final_submissions")
+      .select("github_url, deployment_url")
+      .ilike("team_lead_email", data.teamLeadEmail.toLowerCase().trim())
+      .maybeSingle();
+
+    const githubEdited = !!(p1 && data.githubUrl !== p1.github_url);
+    const deploymentEdited = !!(p1 && data.deploymentUrl !== p1.deployment_url);
+
     const payload: Record<string, any> = {
       team_name: data.teamName, team_lead_name: data.teamLeadName,
       team_lead_contact: data.teamLeadContact, team_lead_email: data.teamLeadEmail,
@@ -53,6 +63,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       video_link: data.videoLink,
       llms_used: data.llmsUsed, vibecoding_tools: data.vibecodingTools,
       database_used: data.databaseUsed, oauth_exists: data.oauthExists,
+      github_edited: githubEdited, deployment_edited: deploymentEdited,
     };
 
     let { error } = await supabaseAdmin.from("r2_submissions").insert({
@@ -61,11 +72,21 @@ export const submitR2Project = createServerFn({ method: "POST" })
     });
 
     if (error?.code === "PGRST204") {
-      // Columns don't exist in table yet — retry without them
-      const retry = await supabaseAdmin.from("r2_submissions").insert(payload);
+      // New columns don't exist — retry with core payload
+      const core: Record<string, any> = { ...payload };
+      delete core.github_edited;
+      delete core.deployment_edited;
+      const retry = await supabaseAdmin.from("r2_submissions").insert({
+        ...core,
+        development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
+      });
       if (retry.error) {
-        if (retry.error.code === "23505") throw new Error("A submission from this email already exists");
-        throw new Error("Failed to submit. Please try again.");
+        // Try without dev flow / tech stack too
+        const retry2 = await supabaseAdmin.from("r2_submissions").insert(core);
+        if (retry2.error) {
+          if (retry2.error.code === "23505") throw new Error("A submission from this email already exists");
+          throw new Error("Failed to submit. Please try again.");
+        }
       }
       return { ok: true };
     }
@@ -98,6 +119,7 @@ export const updateR2SubmissionField = createServerFn({ method: "POST" })
       "phases_completed", "project_summary", "project_uniqueness", "unique_features",
       "video_link", "llms_used", "vibecoding_tools", "database_used", "oauth_exists",
       "development_flow", "tech_stack_used",
+      "github_edited", "deployment_edited",
       "round_status", "admin_notes",
     ];
     if (!allowed.includes(data.field)) throw new Error("Invalid field");

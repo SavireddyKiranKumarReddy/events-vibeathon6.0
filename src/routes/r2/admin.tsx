@@ -216,7 +216,9 @@ function R2AdminPage() {
               "Teammate 2": s.teammate_2,
               "Teammate 3": s.teammate_3,
               "GitHub URL": s.github_url,
+              "GitHub Edited?": s.github_edited ? "Yes" : "No",
               "Deployment URL": s.deployment_url,
+              "Deployment Edited?": s.deployment_edited ? "Yes" : "No",
               "PPT URL": s.ppt_url,
               "Video Link": s.video_link,
               "Phases": s.phases_completed,
@@ -238,7 +240,7 @@ function R2AdminPage() {
             ws["!cols"] = [
               { wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 15 },
               { wch: 20 }, { wch: 20 }, { wch: 20 },
-              { wch: 35 }, { wch: 35 }, { wch: 50 }, { wch: 35 },
+              { wch: 35 }, { wch: 10 }, { wch: 35 }, { wch: 10 }, { wch: 50 }, { wch: 35 },
               { wch: 8 }, { wch: 12 }, { wch: 30 }, { wch: 50 },
               { wch: 50 },               { wch: 50 }, { wch: 50 },
               { wch: 50 }, { wch: 30 }, { wch: 30 },
@@ -317,13 +319,19 @@ function R2AdminPage() {
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <div className="flex items-center gap-1 text-xs text-white/40"><Github className="h-3 w-3" /> GitHub</div>
+                            <div className="flex items-center gap-1 text-xs text-white/40">
+                              <Github className="h-3 w-3" /> GitHub
+                              {s.github_edited ? <span className="ml-1 rounded bg-yellow-500/20 px-1.5 py-0.5 text-[10px] text-yellow-400 font-semibold">EDITED</span> : null}
+                            </div>
                             <a href={s.github_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
                               {s.github_url} <ExternalLink className="h-3 w-3" />
                             </a>
                           </div>
                           <div>
-                            <div className="flex items-center gap-1 text-xs text-white/40"><Globe className="h-3 w-3" /> Deployment</div>
+                            <div className="flex items-center gap-1 text-xs text-white/40">
+                              <Globe className="h-3 w-3" /> Deployment
+                              {s.deployment_edited ? <span className="ml-1 rounded bg-yellow-500/20 px-1.5 py-0.5 text-[10px] text-yellow-400 font-semibold">EDITED</span> : null}
+                            </div>
                             <a href={s.deployment_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary hover:underline">
                               {s.deployment_url} <ExternalLink className="h-3 w-3" />
                             </a>
