@@ -163,6 +163,11 @@ function R2SubmissionPage() {
     && form.teamLeadContact && form.githubUrl && form.deploymentUrl && form.pptUrl
     && form.phasesCompleted > 0;
 
+  // Calculate pending credits for the current edits
+  const prevGithub = existingR2Id ? existingGithub : p1github;
+  const prevDeploy = existingR2Id ? existingDeployment : p1deploy;
+  const pendingCredits = (prevGithub && form.githubUrl !== prevGithub ? 1 : 0) + (prevDeploy && form.deploymentUrl !== prevDeploy ? 1 : 0);
+
   // Phase 1 originals — always locked, never change
   const p1github = teamInfo?.github_url || "";
   const p1deploy = teamInfo?.deployment_url || "";
@@ -294,16 +299,20 @@ function R2SubmissionPage() {
             <div className="lg:col-span-3 space-y-5">
               <div className="glass p-5">
                 <h3 className="mb-4 text-sm font-semibold text-white/80">Project Links (editable)</h3>
+                <div className="mb-3 flex items-center gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs text-yellow-400/80">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Each change to GitHub or Deployment URL costs <strong>1 credit</strong>. Current credits used: <strong>{creditsUsed}</strong></span>
+                </div>
                 <div className="space-y-3">
                   <div>
                     <label className={labelCls}>GitHub URL *</label>
                     <input type="url" className={inputCls} placeholder="https://github.com/..." value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} />
-                    {p1github && form.githubUrl !== p1github && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1github}</p>}
+                    {p1github && form.githubUrl !== p1github && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1github} <span className="text-yellow-400 font-semibold">(+1 credit)</span></p>}
                   </div>
                   <div>
                     <label className={labelCls}>Deployment URL *</label>
                     <input type="url" className={inputCls} placeholder="https://your-app.vercel.app..." value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} />
-                    {p1deploy && form.deploymentUrl !== p1deploy && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1deploy}</p>}
+                    {p1deploy && form.deploymentUrl !== p1deploy && <p className="mt-1 text-xs text-yellow-400/70">Changed from Phase 1: {p1deploy} <span className="text-yellow-400 font-semibold">(+1 credit)</span></p>}
                   </div>
                 </div>
               </div>
@@ -379,7 +388,7 @@ function R2SubmissionPage() {
 
           <div className="flex items-start gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-xs text-yellow-400/70">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>Double-check everything before submitting — <strong>no modifications will be allowed later</strong>.</span>
+            <span>Double-check everything before submitting — <strong>no modifications will be allowed later</strong>. {pendingCredits > 0 ? `This submission will consume ${pendingCredits} credit(s). Total: ${creditsUsed + pendingCredits}` : ""}</span>
           </div>
 
           <button type="submit" disabled={!canSubmit || submit.isPending}
