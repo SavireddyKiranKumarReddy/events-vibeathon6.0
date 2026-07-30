@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { checkR2Eligibility, submitR2Project } from "@/lib/api.r2";
-import { supabase } from "@/integrations/supabase/client";
 import {
-  CheckCircle2, XCircle, Github, Users, Upload, Info, AlertTriangle,
-  ExternalLink, FileText, Loader2, Mail, Search, Lock,
+  CheckCircle2, XCircle, Github, Users, AlertTriangle,
+  ExternalLink, FileText, Mail, Search, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/r2/submission")({
@@ -16,30 +15,11 @@ export const Route = createFileRoute("/r2/submission")({
 });
 
 const inputCls = "w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 outline-none transition-all focus:border-primary focus:bg-white/[0.07] focus:ring-1 focus:ring-primary/30 text-sm";
-const lockedCls = "w-full rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3 text-white/60 text-sm cursor-not-allowed select-all";
 const labelCls = "block text-sm font-medium text-white/70 mb-1.5";
-
-function formatSize(bytes: number) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-}
-
-async function uploadFile(file: File, folder: string): Promise<string> {
-  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `r2/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`;
-  const { error: upErr } = await supabase.storage
-    .from("event-submissions")
-    .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
-  if (upErr) throw new Error(upErr.message);
-  const { data: urlData } = supabase.storage.from("event-submissions").getPublicUrl(path);
-  return urlData.publicUrl;
-}
 
 function R2SubmissionPage() {
   const eligibilityFn = useServerFn(checkR2Eligibility);
   const submitFn = useServerFn(submitR2Project);
-  const pptRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<"email" | "form" | "done">("email");
   const [email, setEmail] = useState("");
@@ -55,6 +35,7 @@ function R2SubmissionPage() {
     githubUrl: "", deploymentUrl: "", pptUrl: "", videoLink: "",
     phasesCompleted: 0,
     projectSummary: "", projectUniqueness: "", uniqueFeatures: "",
+    llmsUsed: "", vibecodingTools: "", databaseUsed: "", oauthExists: "",
   });
 
   const update = (f: string, v: string | number) => setForm(p => ({ ...p, [f]: v }));
@@ -69,6 +50,10 @@ function R2SubmissionPage() {
           teamName: data.team_name,
           teamLeadName: data.team_lead_name,
           teamLeadEmail: data.team_lead_email,
+          githubUrl: data.github_url || "",
+          deploymentUrl: data.deployment_url || "",
+          pptUrl: data.ppt_url || "",
+          videoLink: data.video_link || "",
         }));
         setLocked(true);
         setStep("form");
@@ -128,6 +113,13 @@ function R2SubmissionPage() {
     && form.teamLeadContact && form.githubUrl && form.deploymentUrl && form.pptUrl
     && form.phasesCompleted > 0;
 
+  const lockedLinks = teamInfo ? [
+    { label: "GitHub URL", value: form.githubUrl, icon: Github },
+    { label: "Deployment URL", value: form.deploymentUrl, icon: ExternalLink },
+    { label: "PPT", value: form.pptUrl, icon: FileText },
+    { label: "Video Link", value: form.videoLink, icon: ExternalLink },
+  ].filter(l => l.value) : [];
+
   if (step === "done") return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] p-4">
       <div className="glass mx-auto w-full max-w-lg p-10 text-center">
@@ -177,7 +169,7 @@ function R2SubmissionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] text-white">
-      <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-10 text-center">
           <h1 className="text-sm font-bold text-white/40 tracking-widest uppercase">NXTGENSEC (NEXT GENERATION SECURITY)</h1>
           <p className="mt-1 text-xs text-white/30 italic">Securing Digital Assets</p>
@@ -185,137 +177,118 @@ function R2SubmissionPage() {
           <p className="mt-1 text-base text-white/50">Refined Project Submission</p>
         </div>
 
-        <div className="glass mb-8 p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white"><Info className="h-5 w-5 text-primary" /> Before you submit</h2>
-          <ol className="space-y-3 text-sm text-white/60 list-none">
-            <li className="pl-0"><span className="font-semibold text-primary">1. </span>Submit a <strong className="text-white/80">public GitHub link</strong> with a proper README.</li>
-            <li className="pl-0"><span className="font-semibold text-primary">2. </span>Submit a <strong className="text-white/80">public deployment link</strong> — your project should be live.</li>
-            <li className="pl-0"><span className="font-semibold text-primary">3. </span>Upload your updated <strong className="text-white/80">PPT as PDF</strong> (max 50MB).</li>
-            <li className="pl-0"><span className="font-semibold text-primary">4. </span>The name you enter as <strong className="text-white/80">Team Lead Name</strong> will appear on your certificate.</li>
-          </ol>
-        </div>
-
         {error && <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"><XCircle className="h-4 w-4 shrink-0" /> {error}</div>}
 
         <form onSubmit={e => { e.preventDefault(); if (canSubmit && !submit.isPending) submit.mutate(); }} className="space-y-6">
 
-          <div className="glass p-6">
-            <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Users className="h-5 w-5 text-primary" /> Your Details</h2>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>Team Name *</label>
-                <div className="relative">
-                  <input type="text" className={lockedCls} value={form.teamName} readOnly />
-                  <Lock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Team Lead Name *</label>
-                <div className="relative">
-                  <input type="text" className={lockedCls} value={form.teamLeadName} readOnly />
-                  <Lock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                </div>
-              </div>
-              <div><label className={labelCls}>Contact Number *</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
-              <div>
-                <label className={labelCls}>Email *</label>
-                <div className="relative">
-                  <input type="email" className={lockedCls} value={form.teamLeadEmail} readOnly />
-                  <Lock className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <div className="grid gap-6 lg:grid-cols-5">
 
-          <div className="glass p-6">
-            <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Users className="h-5 w-5 text-primary" /> Teammates <span className="text-sm font-normal text-white/40">(if any)</span></h2>
-            <div className="space-y-3">
-              <div><label className={labelCls}>Teammate 1</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate1} onChange={e => update("teammate1", e.target.value)} /></div>
-              <div><label className={labelCls}>Teammate 2</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate2} onChange={e => update("teammate2", e.target.value)} /></div>
-              <div><label className={labelCls}>Teammate 3</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate3} onChange={e => update("teammate3", e.target.value)} /></div>
-            </div>
-          </div>
-
-          <div className="glass p-6">
-            <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-white"><Github className="h-5 w-5 text-primary" /> Project Links</h2>
-            <div className="space-y-4">
-              <div><label className={labelCls}>GitHub Repository URL *</label><input type="url" className={inputCls} placeholder="https://github.com/username/repo" value={form.githubUrl} onChange={e => update("githubUrl", e.target.value)} /></div>
-              <div><label className={labelCls}>Deployment URL *</label><input type="url" className={inputCls} placeholder="https://your-project.vercel.app" value={form.deploymentUrl} onChange={e => update("deploymentUrl", e.target.value)} /></div>
-              <div>
-                <label className={labelCls}>PPT (PDF only, max 50MB) *</label>
-                <input type="file" ref={pptRef} accept=".pdf" className="hidden" onChange={handlePpt} />
-                {pptState === "done" && form.pptUrl ? (
-                  <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
-                        <FileText className="h-5 w-5 text-green-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-green-400 truncate">{pptName}</p>
-                        <p className="text-xs text-white/40">{pptSize} — PDF — Uploaded successfully</p>
-                      </div>
-                      <button type="button" onClick={removePpt} className="shrink-0 rounded-md bg-red-500/10 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition">Remove</button>
+            <div className="lg:col-span-2 space-y-4">
+              <div className="glass p-5">
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/60 uppercase tracking-wider"><Lock className="h-4 w-4" /> Phase 1 Details</h3>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-white/40">Team Name</div>
+                    <div className="mt-0.5 text-sm font-medium text-white/90">{form.teamName}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/40">Team Lead</div>
+                    <div className="mt-0.5 text-sm text-white/90">{form.teamLeadName}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/40">Email</div>
+                    <div className="mt-0.5 text-sm text-white/90 break-all">{form.teamLeadEmail}</div>
+                  </div>
+                  <div className="border-t border-white/5 pt-3">
+                    <div className="text-xs text-white/40 mb-2">Project Links</div>
+                    <div className="space-y-2">
+                      {lockedLinks && lockedLinks.map((l: any) => l.value ? (
+                        <a key={l.label} href={l.value} target="_blank" rel="noopener"
+                          className="flex items-center gap-2 rounded-md bg-white/5 px-3 py-2 text-xs text-primary hover:bg-white/10 transition">
+                          <l.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{l.label}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0 ml-auto text-white/30" />
+                        </a>
+                      ) : null)}
                     </div>
                   </div>
-                ) : (
-                  <button type="button" onClick={() => pptRef.current?.click()} disabled={pptState === "uploading"}
-                    className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition-all disabled:opacity-50 ${
-                      pptState === "error" ? "border-red-500/40 bg-red-500/5 text-red-400" : pptState === "uploading" ? "border-primary/40 bg-primary/5 text-primary" : "border-white/20 bg-white/5 text-white/40 hover:border-primary/40 hover:bg-white/[0.07] hover:text-white/60"
-                    }`}>
-                    {pptState === "uploading" ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /><span>Uploading...</span></>
-                    ) : pptState === "error" ? (
-                      <><XCircle className="h-4 w-4" /><span>Upload failed — click to try again</span></>
-                    ) : (
-                      <><Upload className="h-4 w-4" /><span>Click to upload your PPT (PDF only, max 50MB)</span></>
-                    )}
-                  </button>
-                )}
-              </div>
-              <div>
-                <label className={labelCls}>Video Link <span className="text-xs text-white/30">(YouTube / Instagram / X — optional)</span></label>
-                <input type="url" className={inputCls} placeholder="https://youtube.com/..." value={form.videoLink} onChange={e => update("videoLink", e.target.value)} />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="glass p-6">
-            <h2 className="mb-2 text-lg font-semibold text-white">Phases Completed *</h2>
-            <p className="mb-4 text-sm text-white/50">How many phases of your problem statement did you complete?</p>
-            <div className="grid grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} type="button" onClick={() => update("phasesCompleted", n)}
-                  className={`rounded-lg border-2 py-4 text-center text-xl font-bold transition-all ${
-                    form.phasesCompleted === n ? "border-primary bg-primary/15 text-primary shadow-lg shadow-primary/10" : "border-white/10 bg-white/[0.03] text-white/20 hover:border-white/25 hover:text-white/50"
-                  }`}>{n}</button>
-              ))}
-            </div>
-            {form.phasesCompleted === 0 && <p className="mt-3 text-xs text-yellow-400/80">Please select a number above to continue.</p>}
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400/80">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>Cross-check before submitting. If a phase you mark as working fails during verification, your team will <strong>not</strong> be eligible for the next round.</span>
-            </div>
-          </div>
+            <div className="lg:col-span-3 space-y-5">
+              <div className="glass p-5">
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/80"><Users className="h-4 w-4 text-primary" /> Contact & Team</h3>
+                <div className="space-y-3">
+                  <div><label className={labelCls}>Contact Number *</label><input type="tel" className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.teamLeadContact} onChange={e => update("teamLeadContact", e.target.value)} /></div>
+                  <div><label className={labelCls}>Teammate 1</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate1} onChange={e => update("teammate1", e.target.value)} /></div>
+                  <div><label className={labelCls}>Teammate 2</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate2} onChange={e => update("teammate2", e.target.value)} /></div>
+                  <div><label className={labelCls}>Teammate 3</label><input type="text" className={inputCls} placeholder="Name (leave blank if none)" value={form.teammate3} onChange={e => update("teammate3", e.target.value)} /></div>
+                </div>
+              </div>
 
-          <div className="glass p-6">
-            <h2 className="mb-5 text-lg font-semibold text-white">About Your Project</h2>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>What does your project do? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
-                <textarea className={`${inputCls} resize-none`} rows={3} maxLength={500} placeholder="Tell us briefly what you built..." value={form.projectSummary} onChange={e => update("projectSummary", e.target.value)} />
-                <div className="mt-1 text-right text-xs text-white/30">{form.projectSummary.length}/500</div>
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">Phases Completed *</h3>
+                <p className="mb-3 text-xs text-white/50">How many phases of your problem statement did you complete?</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button key={n} type="button" onClick={() => update("phasesCompleted", n)}
+                      className={`rounded-lg border-2 py-3 text-center text-lg font-bold transition-all ${
+                        form.phasesCompleted === n ? "border-primary bg-primary/15 text-primary shadow-lg shadow-primary/10" : "border-white/10 bg-white/[0.03] text-white/20 hover:border-white/25 hover:text-white/50"
+                      }`}>{n}</button>
+                  ))}
+                </div>
+                {form.phasesCompleted === 0 && <p className="mt-2 text-xs text-yellow-400/80">Please select a number above to continue.</p>}
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400/80">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>Cross-check before submitting. If a phase you mark as working fails during verification, your team will <strong>not be considered</strong>.</span>
+                </div>
               </div>
-              <div>
-                <label className={labelCls}>What makes it unique? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
-                <textarea className={`${inputCls} resize-none`} rows={3} maxLength={500} placeholder="What's the one thing that makes your project stand out?" value={form.projectUniqueness} onChange={e => update("projectUniqueness", e.target.value)} />
-                <div className="mt-1 text-right text-xs text-white/30">{form.projectUniqueness.length}/500</div>
+
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">About Your Project</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>What does your project do? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
+                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={500} placeholder="Tell us briefly what you built..." value={form.projectSummary} onChange={e => update("projectSummary", e.target.value)} />
+                    <div className="mt-1 text-right text-xs text-white/30">{form.projectSummary.length}/500</div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>What makes it unique? <span className="text-xs text-white/30">(2-3 sentences)</span></label>
+                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={500} placeholder="What's the one thing that makes your project stand out?" value={form.projectUniqueness} onChange={e => update("projectUniqueness", e.target.value)} />
+                    <div className="mt-1 text-right text-xs text-white/30">{form.projectUniqueness.length}/500</div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Any unique or innovative features apart from what's mentioned above? <span className="text-xs text-white/30">(optional)</span></label>
+                    <textarea className={`${inputCls} resize-none`} rows={2} maxLength={1000} placeholder="List any additional unique/innovative features your project has..." value={form.uniqueFeatures} onChange={e => update("uniqueFeatures", e.target.value)} />
+                    <div className="mt-1 text-right text-xs text-white/30">{form.uniqueFeatures.length}/1000</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className={labelCls}>Any unique or innovative features apart from what's mentioned above? <span className="text-xs text-white/30">(optional)</span></label>
-                <textarea className={`${inputCls} resize-none`} rows={3} maxLength={1000} placeholder="List any additional unique/innovative features your project has..." value={form.uniqueFeatures} onChange={e => update("uniqueFeatures", e.target.value)} />
-                <div className="mt-1 text-right text-xs text-white/30">{form.uniqueFeatures.length}/1000</div>
+
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">Tech Stack & Tools</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>LLMs used to develop your project</label>
+                    <input type="text" className={inputCls} placeholder="e.g. GPT-4, Claude, Gemini..." value={form.llmsUsed} onChange={e => update("llmsUsed", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Vibecoding tools used to develop your project</label>
+                    <input type="text" className={inputCls} placeholder="e.g. Lovable, Bolt, Cursor, Copilot..." value={form.vibecodingTools} onChange={e => update("vibecodingTools", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Which database have you used?</label>
+                    <input type="text" className={inputCls} placeholder="e.g. Supabase, MongoDB, PostgreSQL..." value={form.databaseUsed} onChange={e => update("databaseUsed", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Does OAuth (Google or any other) exist?</label>
+                    <input type="text" className={inputCls} placeholder="e.g. Google OAuth, GitHub OAuth, None..." value={form.oauthExists} onChange={e => update("oauthExists", e.target.value)} />
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
 
           <div className="flex items-start gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-xs text-yellow-400/70">

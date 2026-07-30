@@ -225,6 +225,10 @@ function R2AdminPage() {
               "Project Summary": s.project_summary,
               "Uniqueness": s.project_uniqueness,
               "Unique Features": s.unique_features,
+              "LLMs Used": s.llms_used,
+              "Vibecoding Tools": s.vibecoding_tools,
+              "Database Used": s.database_used,
+              "OAuth Exists": s.oauth_exists,
               "Created At": s.created_at,
             }));
             const wb = XLSX.utils.book_new();
@@ -234,7 +238,8 @@ function R2AdminPage() {
               { wch: 20 }, { wch: 20 }, { wch: 20 },
               { wch: 35 }, { wch: 35 }, { wch: 50 }, { wch: 35 },
               { wch: 8 }, { wch: 12 }, { wch: 30 }, { wch: 50 },
-              { wch: 50 }, { wch: 50 }, { wch: 25 },
+              { wch: 50 }, { wch: 50 }, { wch: 30 }, { wch: 30 },
+              { wch: 30 }, { wch: 30 }, { wch: 25 },
             ];
             XLSX.utils.book_append_sheet(wb, ws, "R2 Submissions");
             XLSX.writeFile(wb, `r2-submissions-${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -338,6 +343,15 @@ function R2AdminPage() {
                               </div>
                             )}
                           </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-white/10 pt-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <EditableField label="LLMs Used" value={s.llms_used || ""} id={s.id} field="llms_used" inputFn={fieldMutation.mutate} />
+                          <EditableField label="Vibecoding Tools" value={s.vibecoding_tools || ""} id={s.id} field="vibecoding_tools" inputFn={fieldMutation.mutate} />
+                          <EditableField label="Database Used" value={s.database_used || ""} id={s.id} field="database_used" inputFn={fieldMutation.mutate} />
+                          <EditableField label="OAuth Exists" value={s.oauth_exists || ""} id={s.id} field="oauth_exists" inputFn={fieldMutation.mutate} />
                         </div>
                       </div>
 

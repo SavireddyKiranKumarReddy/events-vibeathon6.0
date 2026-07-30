@@ -7,7 +7,7 @@ export const checkR2Eligibility = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: submission, error } = await supabaseAdmin
       .from("final_submissions")
-      .select("id, team_name, team_lead_name, team_lead_email")
+      .select("id, team_name, team_lead_name, team_lead_email, github_url, deployment_url, ppt_url, video_link")
       .ilike("team_lead_email", data.email.toLowerCase().trim())
       .eq("round_status", "round_2")
       .maybeSingle();
@@ -25,6 +25,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       phasesCompleted: number;
       projectSummary: string; projectUniqueness: string; uniqueFeatures: string;
       videoLink: string;
+      llmsUsed: string; vibecodingTools: string; databaseUsed: string; oauthExists: string;
     }) =>
       z.object({
         teamName: z.string().min(1), teamLeadName: z.string().min(1),
@@ -34,6 +35,8 @@ export const submitR2Project = createServerFn({ method: "POST" })
         phasesCompleted: z.number().min(1).max(5),
         projectSummary: z.string().default(""), projectUniqueness: z.string().default(""), uniqueFeatures: z.string().default(""),
         videoLink: z.string().default(""),
+        llmsUsed: z.string().default(""), vibecodingTools: z.string().default(""),
+        databaseUsed: z.string().default(""), oauthExists: z.string().default(""),
       }).parse(d)
   )
   .handler(async ({ data }) => {
@@ -43,8 +46,11 @@ export const submitR2Project = createServerFn({ method: "POST" })
       teammate_1: data.teammate1, teammate_2: data.teammate2, teammate_3: data.teammate3,
       github_url: data.githubUrl, deployment_url: data.deploymentUrl, ppt_url: data.pptUrl,
       phases_completed: data.phasesCompleted,
-      project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness, unique_features: data.uniqueFeatures,
+      project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness,
+      unique_features: data.uniqueFeatures,
       video_link: data.videoLink,
+      llms_used: data.llmsUsed, vibecoding_tools: data.vibecodingTools,
+      database_used: data.databaseUsed, oauth_exists: data.oauthExists,
     });
     if (error) {
       if (error.code === "23505") throw new Error("A submission from this email already exists");
@@ -72,7 +78,8 @@ export const updateR2SubmissionField = createServerFn({ method: "POST" })
       "teammate_1", "teammate_2", "teammate_3",
       "github_url", "deployment_url", "ppt_url",
       "phases_completed", "project_summary", "project_uniqueness", "unique_features",
-      "video_link", "round_status", "admin_notes",
+      "video_link", "llms_used", "vibecoding_tools", "database_used", "oauth_exists",
+      "round_status", "admin_notes",
     ];
     if (!allowed.includes(data.field)) throw new Error("Invalid field");
     const update: Record<string, any> = { updated_at: new Date().toISOString() };
