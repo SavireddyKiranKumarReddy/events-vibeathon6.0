@@ -5,15 +5,24 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const checkR2Eligibility = createServerFn({ method: "POST" })
   .validator((d: { email: string }) => z.object({ email: z.string().email() }).parse(d))
   .handler(async ({ data }) => {
+    const email = data.email.toLowerCase().trim();
     const { data: submission, error } = await supabaseAdmin
       .from("final_submissions")
       .select("id, team_name, team_lead_name, team_lead_email, team_lead_contact, teammate_1, teammate_2, teammate_3, github_url, deployment_url, ppt_url, video_link, phases_completed, project_summary, project_uniqueness")
-      .ilike("team_lead_email", data.email.toLowerCase().trim())
+      .ilike("team_lead_email", email)
       .eq("round_status", "round_2")
       .maybeSingle();
     if (error) throw new Error("Failed to check eligibility");
     if (!submission) return null;
-    return submission;
+
+    // Also fetch existing r2_submission if any (for re-submission)
+    const { data: existing } = await supabaseAdmin
+      .from("r2_submissions")
+      .select("id, github_url, deployment_url, credits_used")
+      .ilike("team_lead_email", email)
+      .maybeSingle();
+
+    return { ...submission, existing_r2_id: existing?.id || null, existing_github: existing?.github_url || "", existing_deployment: existing?.deployment_url || "", existing_credits: existing?.credits_used || 0 };
   });
 
 export const submitR2Project = createServerFn({ method: "POST" })
@@ -27,6 +36,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       videoLink: string;
       llmsUsed: string; vibecodingTools: string; databaseUsed: string; oauthExists: string;
       developmentFlow: string; techStackUsed: string;
+      existingR2Id?: string; existingGithub?: string; existingDeployment?: string; existingCredits?: number;
     }) =>
       z.object({
         teamName: z.string().min(1), teamLeadName: z.string().min(1),
@@ -39,63 +49,86 @@ export const submitR2Project = createServerFn({ method: "POST" })
         llmsUsed: z.string().default(""), vibecodingTools: z.string().default(""),
         databaseUsed: z.string().default(""), oauthExists: z.string().default(""),
         developmentFlow: z.string().default(""), techStackUsed: z.string().default(""),
+        existingR2Id: z.string().optional(), existingGithub: z.string().optional(), existingDeployment: z.string().optional(), existingCredits: z.number().optional(),
       }).parse(d)
   )
   .handler(async ({ data }) => {
-    // Fetch Phase 1 data to compare URLs
-    const { data: p1 } = await supabaseAdmin
-      .from("final_submissions")
-      .select("github_url, deployment_url")
-      .ilike("team_lead_email", data.teamLeadEmail.toLowerCase().trim())
-      .maybeSingle();
+    const email = data.teamLeadEmail.toLowerCase().trim();
+    const newGithub = data.githubUrl;
+    const newDeploy = data.deploymentUrl;
+    const oldGithub = data.existingGithub || "";
+    const oldDeploy = data.existingDeployment || "";
+    const oldCredits = data.existingCredits || 0;
 
-    const githubEdited = !!(p1 && data.githubUrl !== p1.github_url);
-    const deploymentEdited = !!(p1 && data.deploymentUrl !== p1.deployment_url);
+    // Credits: each change costs 1
+    let extraCredits = 0;
+    if (data.existingR2Id) {
+      // Re-submission: compare with existing r2_submission values
+      if (oldGithub && newGithub !== oldGithub) extraCredits++;
+      if (oldDeploy && newDeploy !== oldDeploy) extraCredits++;
+    } else {
+      // First submission: compare with Phase 1 values from final_submissions
+      const { data: p1 } = await supabaseAdmin
+        .from("final_submissions")
+        .select("github_url, deployment_url")
+        .ilike("team_lead_email", email)
+        .maybeSingle();
+      if (p1) {
+        if (newGithub !== p1.github_url) extraCredits++;
+        if (newDeploy !== p1.deployment_url) extraCredits++;
+      }
+    }
+
+    const newCredits = oldCredits + extraCredits;
 
     const payload: Record<string, any> = {
       team_name: data.teamName, team_lead_name: data.teamLeadName,
-      team_lead_contact: data.teamLeadContact, team_lead_email: data.teamLeadEmail,
+      team_lead_contact: data.teamLeadContact, team_lead_email: email,
       teammate_1: data.teammate1, teammate_2: data.teammate2, teammate_3: data.teammate3,
-      github_url: data.githubUrl, deployment_url: data.deploymentUrl, ppt_url: data.pptUrl,
+      github_url: newGithub, deployment_url: newDeploy, ppt_url: data.pptUrl,
       phases_completed: data.phasesCompleted,
       project_summary: data.projectSummary, project_uniqueness: data.projectUniqueness,
       unique_features: data.uniqueFeatures,
       video_link: data.videoLink,
       llms_used: data.llmsUsed, vibecoding_tools: data.vibecodingTools,
       database_used: data.databaseUsed, oauth_exists: data.oauthExists,
-      github_edited: githubEdited, deployment_edited: deploymentEdited,
+      development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
+      credits_used: newCredits,
     };
 
-    let { error } = await supabaseAdmin.from("r2_submissions").insert({
-      ...payload,
-      development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
-    });
+    let error: any;
+
+    if (data.existingR2Id) {
+      // Update existing submission
+      ({ error } = await supabaseAdmin.from("r2_submissions").update(payload).eq("id", data.existingR2Id));
+    } else {
+      // New submission
+      ({ error } = await supabaseAdmin.from("r2_submissions").insert(payload));
+    }
 
     if (error?.code === "PGRST204") {
-      // New columns don't exist — retry with core payload
+      // New columns don't exist — retry without them
       const core: Record<string, any> = { ...payload };
-      delete core.github_edited;
-      delete core.deployment_edited;
-      const retry = await supabaseAdmin.from("r2_submissions").insert({
-        ...core,
-        development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
-      });
-      if (retry.error) {
-        // Try without dev flow / tech stack too
-        const retry2 = await supabaseAdmin.from("r2_submissions").insert(core);
-        if (retry2.error) {
-          if (retry2.error.code === "23505") throw new Error("A submission from this email already exists");
-          throw new Error("Failed to submit. Please try again.");
-        }
+      delete core.development_flow;
+      delete core.tech_stack_used;
+      delete core.credits_used;
+      if (data.existingR2Id) {
+        ({ error } = await supabaseAdmin.from("r2_submissions").update(core).eq("id", data.existingR2Id));
+      } else {
+        ({ error } = await supabaseAdmin.from("r2_submissions").insert(core));
       }
-      return { ok: true };
+      if (error) {
+        if (error.code === "23505") throw new Error("A submission from this email already exists");
+        throw new Error("Failed to submit. Please try again.");
+      }
+      return { ok: true, creditsUsed: newCredits };
     }
 
     if (error) {
       if (error.code === "23505") throw new Error("A submission from this email already exists");
       throw new Error("Failed to submit. Please try again.");
     }
-    return { ok: true };
+    return { ok: true, creditsUsed: newCredits };
   });
 
 export const getR2Submissions = createServerFn({ method: "GET" })
@@ -118,8 +151,7 @@ export const updateR2SubmissionField = createServerFn({ method: "POST" })
       "github_url", "deployment_url", "ppt_url",
       "phases_completed", "project_summary", "project_uniqueness", "unique_features",
       "video_link", "llms_used", "vibecoding_tools", "database_used", "oauth_exists",
-      "development_flow", "tech_stack_used",
-      "github_edited", "deployment_edited",
+      "development_flow", "tech_stack_used", "credits_used",
       "round_status", "admin_notes",
     ];
     if (!allowed.includes(data.field)) throw new Error("Invalid field");

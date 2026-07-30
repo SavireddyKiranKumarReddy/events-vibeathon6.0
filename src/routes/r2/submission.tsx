@@ -48,6 +48,10 @@ function R2SubmissionPage() {
   const [teamInfo, setTeamInfo] = useState<any>(null);
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState("");
+  const [creditsUsed, setCreditsUsed] = useState(0);
+  const [existingR2Id, setExistingR2Id] = useState<string | null>(null);
+  const [existingGithub, setExistingGithub] = useState("");
+  const [existingDeployment, setExistingDeployment] = useState("");
   const [pptState, setPptState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [pptName, setPptName] = useState("");
   const [pptSize, setPptSize] = useState("");
@@ -68,6 +72,10 @@ function R2SubmissionPage() {
     onSuccess: (data) => {
       if (data) {
         setTeamInfo(data);
+        setExistingR2Id(data.existing_r2_id || null);
+        setExistingGithub(data.existing_github || "");
+        setExistingDeployment(data.existing_deployment || "");
+        setCreditsUsed(data.existing_credits || 0);
         setForm(p => ({
           ...p,
           teamName: data.team_name,
@@ -137,8 +145,17 @@ function R2SubmissionPage() {
   }
 
   const submit = useMutation({
-    mutationFn: () => submitFn({ data: form }),
-    onSuccess: () => setStep("done"),
+    mutationFn: () => submitFn({ data: {
+      ...form,
+      existingR2Id: existingR2Id || undefined,
+      existingGithub: existingGithub || undefined,
+      existingDeployment: existingDeployment || undefined,
+      existingCredits: creditsUsed || undefined,
+    }}),
+    onSuccess: (result: any) => {
+      setCreditsUsed(result?.creditsUsed ?? creditsUsed);
+      setStep("done");
+    },
     onError: (e: any) => setError(e.message || "Submission failed. Please try again."),
   });
 
@@ -175,6 +192,7 @@ function R2SubmissionPage() {
         <h1 className="text-3xl font-bold text-white">Round 2 — Submitted!</h1>
         <p className="mt-4 text-base text-white/60">Your Round 2 submission has been recorded. We'll review it soon — best of luck!</p>
         <p className="mt-3 text-sm text-white/40">{form.teamName} — {form.teamLeadName}</p>
+        {creditsUsed > 0 && <p className="mt-2 text-xs text-yellow-400/70">Credits used: {creditsUsed}</p>}
       </div>
     </div>
   );
