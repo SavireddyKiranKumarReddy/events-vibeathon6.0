@@ -94,6 +94,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       database_used: data.databaseUsed, oauth_exists: data.oauthExists,
       development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
       credits_used: newCredits,
+      feedback_screenshot_url: "", event_experience: "",
     };
 
     let error: any;
