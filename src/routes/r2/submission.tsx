@@ -158,7 +158,6 @@ function R2SubmissionPage() {
     { label: "Teammate 1", value: form.teammate1 },
     { label: "Teammate 2", value: form.teammate2 },
     { label: "Teammate 3", value: form.teammate3 },
-    { label: "Phases Completed", value: String(form.phasesCompleted) },
     { label: "Project Summary", value: form.projectSummary },
     { label: "Uniqueness", value: form.projectUniqueness },
   ].filter(f => f.value) : [];
@@ -271,6 +270,23 @@ function R2SubmissionPage() {
             </div>
 
             <div className="lg:col-span-3 space-y-5">
+              <div className="glass p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white/80">Phases Completed</h3>
+                <p className="mb-3 text-xs text-white/50">How many phases of your problem statement did you complete?</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button key={n} type="button" onClick={() => update("phasesCompleted", n)}
+                      className={`rounded-lg border-2 py-3 text-center text-lg font-bold transition-all ${
+                        form.phasesCompleted === n ? "border-primary bg-primary/15 text-primary shadow-lg shadow-primary/10" : "border-white/10 bg-white/[0.03] text-white/20 hover:border-white/25 hover:text-white/50"
+                      }`}>{n}</button>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400/80">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>Cross-check before submitting. If a phase you mark as working fails during verification, your team will <strong>not be considered</strong>.</span>
+                </div>
+              </div>
+
               <div className="glass p-5">
                 <h3 className="mb-4 text-sm font-semibold text-white/80">About Your Project</h3>
                 <div className="space-y-3">
