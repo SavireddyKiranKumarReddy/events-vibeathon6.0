@@ -159,6 +159,10 @@ function R2SubmissionPage() {
     onError: (e: any) => setError(e.message || "Submission failed. Please try again."),
   });
 
+  // Phase 1 originals — always locked, never change
+  const p1github = teamInfo?.github_url || "";
+  const p1deploy = teamInfo?.deployment_url || "";
+
   const canSubmit = form.teamName && form.teamLeadName && form.teamLeadEmail
     && form.teamLeadContact && form.githubUrl && form.deploymentUrl && form.pptUrl
     && form.phasesCompleted > 0;
@@ -167,10 +171,6 @@ function R2SubmissionPage() {
   const prevGithub = existingR2Id ? existingGithub : p1github;
   const prevDeploy = existingR2Id ? existingDeployment : p1deploy;
   const pendingCredits = (prevGithub && form.githubUrl !== prevGithub ? 1 : 0) + (prevDeploy && form.deploymentUrl !== prevDeploy ? 1 : 0);
-
-  // Phase 1 originals — always locked, never change
-  const p1github = teamInfo?.github_url || "";
-  const p1deploy = teamInfo?.deployment_url || "";
 
   const lockedLinks = teamInfo ? [
     { label: "GitHub URL (Phase 1)", value: p1github, icon: Github },
