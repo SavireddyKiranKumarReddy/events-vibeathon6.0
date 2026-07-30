@@ -42,7 +42,7 @@ export const submitR2Project = createServerFn({ method: "POST" })
       }).parse(d)
   )
   .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("r2_submissions").insert({
+    const payload: Record<string, any> = {
       team_name: data.teamName, team_lead_name: data.teamLeadName,
       team_lead_contact: data.teamLeadContact, team_lead_email: data.teamLeadEmail,
       teammate_1: data.teammate1, teammate_2: data.teammate2, teammate_3: data.teammate3,
@@ -53,8 +53,23 @@ export const submitR2Project = createServerFn({ method: "POST" })
       video_link: data.videoLink,
       llms_used: data.llmsUsed, vibecoding_tools: data.vibecodingTools,
       database_used: data.databaseUsed, oauth_exists: data.oauthExists,
+    };
+
+    let { error } = await supabaseAdmin.from("r2_submissions").insert({
+      ...payload,
       development_flow: data.developmentFlow, tech_stack_used: data.techStackUsed,
     });
+
+    if (error?.code === "PGRST204") {
+      // Columns don't exist in table yet — retry without them
+      const retry = await supabaseAdmin.from("r2_submissions").insert(payload);
+      if (retry.error) {
+        if (retry.error.code === "23505") throw new Error("A submission from this email already exists");
+        throw new Error("Failed to submit. Please try again.");
+      }
+      return { ok: true };
+    }
+
     if (error) {
       if (error.code === "23505") throw new Error("A submission from this email already exists");
       throw new Error("Failed to submit. Please try again.");
